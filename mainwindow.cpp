@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     ChapterTreeModel * model = new ChapterTreeModel;
     model->loadFromFile(m_audioFile);
     ui->treeView->setModel(model);
+    ui->treeView->expandAll();
 
     TagLib::MPEG::File file(m_audioFile.toLocal8Bit().data());
     TagLib::ID3v2::Tag * id3v2Tag = file.ID3v2Tag();

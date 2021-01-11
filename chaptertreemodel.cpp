@@ -10,16 +10,14 @@
 #include <attachedpictureframe.h>
 
 #include <QDebug>
+#include <QTime>
 
 namespace ID3v2 = TagLib::ID3v2;
 
-ChapterTreeModel::ChapterTreeModel()
-{
-
-}
-
 void ChapterTreeModel::loadFromFile(const QString &pathToFile)
 {
+    clear();
+
     TagLib::MPEG::File file(pathToFile.toLocal8Bit().data());
     ID3v2::Tag * id3v2Tag = file.ID3v2Tag();
     if (id3v2Tag) {
@@ -33,35 +31,36 @@ void ChapterTreeModel::loadFromFile(const QString &pathToFile)
                 const ID3v2::TableOfContentsFrame * tocFrame = dynamic_cast<const ID3v2::TableOfContentsFrame *>(frame);
                 QString elementId(QString::fromLatin1(tocFrame->elementID().data(), tocFrame->elementID().size()));
 
+                ChapterItem * tocItem = m_manager.registerItem(elementId);
+                tocItem->setItemProperty(FrameId, "CTOC");
                 if (tocFrame->isTopLevel()) {
-                    m_manager.setTopLevelElementId(elementId);
+                    appendRow(tocItem);
                 }
 
-                TOCElement * el = m_manager.registerElement<TOCElement>(elementId);
                 QStringList subElementsIds;
                 for (const TagLib::ByteVector & bv : tocFrame->childElements()) {
                     QString chapterElementId(QString::fromLatin1(bv.data(), bv.size()));
-                    ChapterElement * chapterEl = m_manager.registerElement<ChapterElement>(chapterElementId);
-                    chapterEl->setParent(el);
-                    subElementsIds.append(chapterElementId);
+                    ChapterItem * chapterItem = m_manager.registerItem(chapterElementId);
+                    chapterItem->setItemProperty(FrameId, "CHAP");
+
+                    tocItem->appendRow(chapterItem);
                 }
-                el->setSubElementsIds(subElementsIds);
             } else if (frame->frameID() == "CHAP") {
                 const ID3v2::ChapterFrame * chapterFrame = dynamic_cast<const ID3v2::ChapterFrame *>(frame);
                 QString elementId(QString::fromLatin1(chapterFrame->elementID().data(), chapterFrame->elementID().size()));
 
-                ChapterElement * el = m_manager.registerElement<ChapterElement>(elementId);
-                el->setProperty(P_START_TIME_MS, chapterFrame->startTime());
-                el->setProperty(P_END_TIME_MS, chapterFrame->endTime());
+                ChapterItem * chapterItem = m_manager.registerItem(elementId);
+                chapterItem->setItemProperty(ChapterStartTimeMs, chapterFrame->startTime());
+                chapterItem->setItemProperty(ChapterEndTimeMs, chapterFrame->endTime());
 
                 const ID3v2::FrameList subFrames = chapterFrame->embeddedFrameList();
                 for (const ID3v2::Frame * subFrame : subFrames) {
                     if (subFrame->frameID() == "TIT2") {
                         const ID3v2::TextIdentificationFrame * chapterTitle = dynamic_cast<const ID3v2::TextIdentificationFrame *>(subFrame);
-                        el->setProperty(P_CHAP_TITLE, QString::fromStdString(chapterTitle->toString().to8Bit()));
+                        chapterItem->setItemProperty(ChapterTitle, QString::fromStdString(chapterTitle->toString().to8Bit()));
                     } else if (subFrame->frameID() == "WXXX") {
                         const TagLib::ID3v2::UserUrlLinkFrame * wwwLink = dynamic_cast<const ID3v2::UserUrlLinkFrame *>(subFrame);
-                        el->setProperty(P_CHAP_URL, QString::fromStdString(wwwLink->url().to8Bit()));
+                        chapterItem->setItemProperty(ChapterUrl, QString::fromStdString(wwwLink->toString().to8Bit()));
                     }
                 }
             }
@@ -71,91 +70,49 @@ void ChapterTreeModel::loadFromFile(const QString &pathToFile)
     return;
 }
 
-TOCElement *ChapterTreeModel::rootElement() const
+QVariant ChapterTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    return m_manager.topLevelTOCElement();
-}
+    if (role != Qt::DisplayRole)
+        return QVariant();
 
-
-QModelIndex ChapterTreeModel::index(int row, int column, const QModelIndex &parent) const
-{
-    if (parent.isValid() && parent.column() != 0)
-        return QModelIndex();
-
-    Element *parentItem = element<Element>(parent);
-    if (parentItem == nullptr) {
-        parentItem = rootElement();
-    }
-
-    if (parentItem->isTOCElement()) {
-        TOCElement * tocEl = dynamic_cast<TOCElement *>(parentItem);
-        QString childElementId = tocEl->subElementAt(row);
-        if (childElementId.isEmpty()) {
-            return QModelIndex();
-        } else {
-            return createIndex(row, column, m_manager.element(childElementId));
+    if (orientation == Qt::Horizontal) {
+        switch (section) {
+        case 0:
+            return tr("Name");
+        case 1:
+            return tr("Start Time");
+        case 2:
+            return tr("End Time");
+        default:
+            return QVariant();
         }
-    } else {
-        return QModelIndex();
     }
-}
-
-QModelIndex ChapterTreeModel::parent(const QModelIndex &child) const
-{
-    if (!child.isValid()) {
-        return QModelIndex();
-    }
-
-    Element *childItem = element<Element>(child);
-    TOCElement *parentItem = childItem->parent();
-    QString elementId = m_manager.elementId(childItem);
-
-    if (parentItem == rootElement()) {
-        return QModelIndex();
-    }
-
-    return createIndex(parentItem->subElementAt(elementId), 0, parentItem);
-}
-
-int ChapterTreeModel::rowCount(const QModelIndex &parent) const
-{
-    Element * el = element<Element>(parent);
-    if (el == nullptr) {
-        el = rootElement();
-    }
-
-    if (el->isTOCElement()) {
-        TOCElement * tocEl = dynamic_cast<TOCElement *>(el);
-        return tocEl->subElementsCount();
-    } else {
-        return 0;
-    }
-}
-
-int ChapterTreeModel::columnCount(const QModelIndex &parent) const
-{
-    Element * el = element<Element>(parent);
-    if (el == nullptr) {
-        el = rootElement();
-    }
-
-    return std::max(el->propertyCount(), 3);
+    return QVariant();
 }
 
 QVariant ChapterTreeModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid()) {
-        return QVariant();
+    if (!index.isValid()) return QStandardItemModel::data(index, role);
+    if (role != Qt::DisplayRole) return QStandardItemModel::data(index, role);
+
+    switch (index.column()) {
+    case 1: {
+        QTime time(QTime::fromMSecsSinceStartOfDay(itemFromIndex(index.siblingAtColumn(0))->data(ChapterStartTimeMs).toInt()));
+        return time.toString();
+    }
+    case 2: {
+        QTime time(QTime::fromMSecsSinceStartOfDay(itemFromIndex(index.siblingAtColumn(0))->data(ChapterEndTimeMs).toInt()));
+        return time.toString();
+    }
+    default:
+        break;
     }
 
-    if (role != Qt::DisplayRole) {
-        return QVariant();
-    }
+    return QStandardItemModel::data(index, role);
+}
 
-    Element * el = element<Element>(index);
-    if (el->isTOCElement()) {
-        return "Placeholder";
-    } else {
-        return el->property(el->propertyType(index.column()));
-    }
+int ChapterTreeModel::columnCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+    return 3;
 }
