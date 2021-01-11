@@ -50,9 +50,9 @@ QVariant ChapterElement::property(ElementProperty propertyType) const
 {
     switch (propertyType) {
     case P_START_TIME_MS:
-        return m_startTimeMs;
+        return QVariant::fromValue<uint64_t>(m_startTimeMs);
     case P_END_TIME_MS:
-        return m_endTimeMs;
+        return QVariant::fromValue<uint64_t>(m_endTimeMs);
     case P_CHAP_TITLE:
         return m_title;
     case P_CHAP_URL:
