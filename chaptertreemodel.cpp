@@ -56,11 +56,17 @@ void ChapterTreeModel::loadFromFile(const QString &pathToFile)
                 const ID3v2::FrameList subFrames = chapterFrame->embeddedFrameList();
                 for (const ID3v2::Frame * subFrame : subFrames) {
                     if (subFrame->frameID() == "TIT2") {
+                        // TIT2: TextIdentificationFrame
                         const ID3v2::TextIdentificationFrame * chapterTitle = dynamic_cast<const ID3v2::TextIdentificationFrame *>(subFrame);
                         chapterItem->setItemProperty(ChapterTitle, QString::fromStdString(chapterTitle->toString().to8Bit()));
                     } else if (subFrame->frameID() == "WXXX") {
+                        // WXXX: UserUrlLinkFrame
                         const TagLib::ID3v2::UserUrlLinkFrame * wwwLink = dynamic_cast<const ID3v2::UserUrlLinkFrame *>(subFrame);
                         chapterItem->setItemProperty(ChapterUrl, QString::fromStdString(wwwLink->toString().to8Bit()));
+                    } else if (subFrame->frameID() == "APIC") {
+                        // APIC: AttachedPictureFrame
+                        const TagLib::ID3v2::AttachedPictureFrame * pic = dynamic_cast<const TagLib::ID3v2::AttachedPictureFrame *>(subFrame);
+                        std::cout << pic->description() << " " << pic->mimeType() << std::endl;
                     }
                 }
             }

@@ -21,8 +21,6 @@ pkg_check_modules(TagLib REQUIRED taglib)
 
 add_executable(${EXE_NAME}
     main.cpp
-#    frameitem.cpp
-#    frameitem.h
     chaptertreemanager.cpp
     chaptertreemanager.h
     chaptertreemodel.cpp

@@ -10,6 +10,7 @@ enum ChapterProperties : int {
     ChapterEndTimeMs,
     ChapterTitle,
     ChapterUrl,
+    ChapterPicture,
 };
 
 class ChapterItem : public QStandardItem
