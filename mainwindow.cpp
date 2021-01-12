@@ -13,27 +13,61 @@
 #include <urllinkframe.h>
 #include <attachedpictureframe.h>
 
-#include <QDebug>
+#include <QMimeData>
+#include <QMouseEvent>
 
-// spec: https://id3.org/id3v2-chapters-1.0
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_filePath(R"(C:\Users\Gary\Downloads\auphonic_chapters_demo.mp3)")
 {
     ui->setupUi(this);
 
-    QString m_audioFile(QStringLiteral(R"(C:\Users\Gary\Downloads\auphonic_chapters_demo.mp3)"));
+    ui->actionSave->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogSaveButton));
 
-    ChapterTreeModel * model = new ChapterTreeModel;
-    model->loadFromFile(m_audioFile);
-    ui->treeView->setModel(model);
-    ui->treeView->expandAll();
-    ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    loadFile();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+
+    return QMainWindow::dragEnterEvent(event);
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    event->acceptProposedAction();
+
+    const QMimeData * mimeData = event->mimeData();
+
+    if (mimeData->hasUrls()) {
+        const QList<QUrl> &urls = mimeData->urls();
+        if (!urls.isEmpty()) {
+            m_filePath = urls.first().toLocalFile();
+            loadFile();
+        }
+    }
+}
+
+void MainWindow::loadFile()
+{
+    ChapterTreeModel * model = new ChapterTreeModel;
+    model->loadFromFile(m_filePath);
+    ui->treeView->setModel(model);
+    ui->treeView->expandAll();
+    ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+}
+
 

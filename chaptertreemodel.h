@@ -11,6 +11,8 @@ public:
     using QStandardItemModel::QStandardItemModel;
 
     void loadFromFile(const QString & pathToFile);
+    void loadFromMpegFile(const QString & pathToFile);
+    void loadFromVorbisFile(const QString & pathToFile);
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;

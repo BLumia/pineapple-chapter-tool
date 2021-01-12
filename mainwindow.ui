@@ -10,20 +10,65 @@
     <height>600</height>
    </rect>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QTreeView" name="treeView">
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
-      </property>
-      <attribute name="headerStretchLastSection">
-       <bool>false</bool>
-      </attribute>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QTreeView" name="treeView">
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
+        <attribute name="headerStretchLastSection">
+         <bool>false</bool>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QPushButton" name="appendChapterBtn">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="removeBtn">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="importBtn">
+          <property name="text">
+           <string>Import</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -38,6 +83,38 @@
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSave"/>
+  </widget>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>Save to file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
