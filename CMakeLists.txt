@@ -25,6 +25,8 @@ add_executable(${EXE_NAME}
     chaptertreemanager.h
     chaptertreemodel.cpp
     chaptertreemodel.h
+    chaptertreeview.cpp
+    chaptertreeview.h
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui

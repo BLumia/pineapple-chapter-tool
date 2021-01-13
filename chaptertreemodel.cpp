@@ -136,6 +136,33 @@ void ChapterTreeModel::loadFromVorbisFile(const QString &pathToFile)
     }
 }
 
+// actually only one item can be selected..
+QModelIndex ChapterTreeModel::appendChapter(const QModelIndexList &selectedIndexes)
+{
+    QModelIndex parent;
+    int row = -1;
+
+    if (!selectedIndexes.isEmpty()) {
+        parent = selectedIndexes[0].parent();
+        row = selectedIndexes[0].row();
+    }
+
+    QStandardItem * parentItem = parent.isValid() ? itemFromIndex(parent)
+                                                  : invisibleRootItem()->child(0);
+
+    ChapterItem * newChapter = new ChapterItem();
+    newChapter->setColumnCount(3);
+    newChapter->setItemProperty(FrameId, "CHAP");
+    newChapter->setItemProperty(ChapterTitle, "New Chapter");
+    if (row != -1) {
+        parentItem->insertRow(row + 1, newChapter);
+    } else {
+        parentItem->appendRow(newChapter);
+    }
+
+    return indexFromItem(newChapter);
+}
+
 QVariant ChapterTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role != Qt::DisplayRole)

@@ -21,6 +21,10 @@ protected:
 
 private slots:
     void on_actionOpen_triggered();
+    void on_treeView_viewSelectionChanged();
+
+    void on_appendChapterBtn_clicked();
+    void on_removeBtn_clicked();
 
 private:
     void loadFile();

@@ -85,7 +85,10 @@ void MainWindow::loadFile()
         QFileInfo fileInfo(m_filePath);
         setWindowTitle(fileInfo.fileName());
     } else {
-        QMessageBox::information(this, tr("Load failed"), tr("Unsupported audio file type."));
+        QMessageBox::information(
+                    this, tr("Load failed"),
+                    tr("Unsupported file type.\nThe supported file types are: %1.")
+                    .arg("mp3, ogg"));
     }
 }
 
@@ -98,5 +101,35 @@ void MainWindow::on_actionOpen_triggered()
     if (!filePath.isEmpty()) {
         m_filePath = filePath;
         loadFile();
+    }
+}
+
+void MainWindow::on_treeView_viewSelectionChanged()
+{
+    bool canDelete = false;
+
+    QModelIndexList selectedIndex(ui->treeView->selectionModel()->selectedIndexes());
+    if (!selectedIndex.isEmpty()) {
+        canDelete = true;
+    }
+
+    ui->removeBtn->setEnabled(canDelete);
+}
+
+void MainWindow::on_appendChapterBtn_clicked()
+{
+    QModelIndexList selectedIndex(ui->treeView->selectionModel()->selectedIndexes());
+
+    ChapterTreeModel * model = qobject_cast<ChapterTreeModel *>(ui->treeView->model());
+    if (model) {
+        model->appendChapter(selectedIndex);
+    }
+}
+
+void MainWindow::on_removeBtn_clicked()
+{
+    QModelIndexList selectedIndex(ui->treeView->selectionModel()->selectedIndexes());
+    if (!selectedIndex.isEmpty()) {
+        ui->treeView->model()->removeRow(selectedIndex[0].row(), selectedIndex[0].parent());
     }
 }

@@ -21,7 +21,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QTreeView" name="treeView">
+       <widget class="ChapterTreeView" name="treeView">
         <property name="editTriggers">
          <set>QAbstractItemView::NoEditTriggers</set>
         </property>
@@ -128,6 +128,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ChapterTreeView</class>
+   <extends>QTreeView</extends>
+   <header>chaptertreeview.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
