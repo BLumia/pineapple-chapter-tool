@@ -10,7 +10,7 @@ class ChapterTreeModel : public QStandardItemModel
 public:
     using QStandardItemModel::QStandardItemModel;
 
-    void loadFromFile(const QString & pathToFile);
+    bool loadFromFile(const QString & pathToFile);
     void loadFromMpegFile(const QString & pathToFile);
     void loadFromVorbisFile(const QString & pathToFile);
 

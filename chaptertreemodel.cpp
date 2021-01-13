@@ -17,21 +17,23 @@
 
 namespace ID3v2 = TagLib::ID3v2;
 
-void ChapterTreeModel::loadFromFile(const QString &pathToFile)
+bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
 {
     clear();
 
     QMimeDatabase db;
     QMimeType mimeType = db.mimeTypeForFile(pathToFile);
     if (mimeType.inherits("audio/mpeg")) {
-        return loadFromMpegFile(pathToFile);
+        loadFromMpegFile(pathToFile);
+        return true;
     } else if (mimeType.inherits("audio/x-vorbis+ogg")) {
-        return loadFromVorbisFile(pathToFile);
+        loadFromVorbisFile(pathToFile);
+        return true;
     }
 
     qDebug() << mimeType;
 
-    return;
+    return false;
 }
 
 // spec: https://id3.org/id3v2-chapters-1.0
@@ -77,7 +79,7 @@ void ChapterTreeModel::loadFromMpegFile(const QString &pathToFile)
                     if (subFrame->frameID() == "TIT2") {
                         // TIT2: TextIdentificationFrame
                         const ID3v2::TextIdentificationFrame * chapterTitle = dynamic_cast<const ID3v2::TextIdentificationFrame *>(subFrame);
-                        chapterItem->setItemProperty(ChapterTitle, QString::fromStdString(chapterTitle->toString().to8Bit()));
+                        chapterItem->setItemProperty(ChapterTitle, QString::fromStdString(chapterTitle->toString().to8Bit(true)));
                     } else if (subFrame->frameID() == "WXXX") {
                         // WXXX: UserUrlLinkFrame
                         const TagLib::ID3v2::UserUrlLinkFrame * wwwLink = dynamic_cast<const ID3v2::UserUrlLinkFrame *>(subFrame);
@@ -106,7 +108,7 @@ void ChapterTreeModel::loadFromVorbisFile(const QString &pathToFile)
     TagLib::Ogg::XiphComment * tags = file.tag();
     if (tags) {
         const TagLib::Ogg::FieldListMap & fieldMap = tags->fieldListMap();
-        for (auto kv : fieldMap) {
+        for (const auto & kv : fieldMap) {
             if (kv.first.startsWith("CHAPTER")) {
                 TagLib::String chapterId(kv.first.substr(0, substrPos));
                 TagLib::String subStr(kv.first.substr(substrPos));
@@ -117,7 +119,6 @@ void ChapterTreeModel::loadFromVorbisFile(const QString &pathToFile)
 
                 if (subStr.isEmpty()) {
                     // CHAPTER001=00:00:00.000
-                    qDebug() << value << QTime::fromString(value, QStringLiteral("hh:mm:ss.zzz")).msec();
                     chapterItem->setItemProperty(ChapterStartTimeMs, QTime::fromString(value, QStringLiteral("hh:mm:ss.zzz")).msecsSinceStartOfDay());
                     tocItem->appendRow(chapterItem);
                 } else if (subStr == "NAME") {
@@ -127,7 +128,7 @@ void ChapterTreeModel::loadFromVorbisFile(const QString &pathToFile)
                     // CHAPTER001URL=http://...
                     chapterItem->setItemProperty(ChapterUrl, value);
                 }
-                std::cout << chapterId.to8Bit() << std::endl;
+                //std::cout << chapterId.to8Bit() << std::endl;
             }
             QString commentKey(QString::fromStdString(kv.first.to8Bit()));
             //std::cout << kv.first.toCString() << " : " << kv.second.toString().toCString() << std::endl;
@@ -160,13 +161,18 @@ QVariant ChapterTreeModel::data(const QModelIndex &index, int role) const
     if (!index.isValid()) return QStandardItemModel::data(index, role);
     if (role != Qt::DisplayRole) return QStandardItemModel::data(index, role);
 
+    // only affect text display
     switch (index.column()) {
     case 1: {
         QTime time(QTime::fromMSecsSinceStartOfDay(itemFromIndex(index.siblingAtColumn(0))->data(ChapterStartTimeMs).toInt()));
         return time.toString();
     }
     case 2: {
-        QTime time(QTime::fromMSecsSinceStartOfDay(itemFromIndex(index.siblingAtColumn(0))->data(ChapterEndTimeMs).toInt()));
+        QVariant data(itemFromIndex(index.siblingAtColumn(0))->data(ChapterEndTimeMs));
+        if (data.isNull()) {
+            return QStringLiteral("N/A");
+        }
+        QTime time(QTime::fromMSecsSinceStartOfDay(data.toInt()));
         return time.toString();
     }
     default:

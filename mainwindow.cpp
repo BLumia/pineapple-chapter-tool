@@ -13,6 +13,8 @@
 #include <urllinkframe.h>
 #include <attachedpictureframe.h>
 
+#include <QFileDialog>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
 
@@ -25,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->actionOpen->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->actionSave->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogSaveButton));
 
     loadFile();
@@ -63,11 +66,37 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::loadFile()
 {
+    QFileInfo fileInfo(m_filePath);
+    if (!fileInfo.exists()) return;
+
     ChapterTreeModel * model = new ChapterTreeModel;
-    model->loadFromFile(m_filePath);
-    ui->treeView->setModel(model);
-    ui->treeView->expandAll();
-    ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    bool succ = model->loadFromFile(m_filePath);
+    if (succ) {
+        QAbstractItemModel * oldModel = ui->treeView->model();
+
+        ui->treeView->setModel(model);
+        ui->treeView->expandAll();
+        ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+
+        if (oldModel) {
+            delete oldModel;
+        }
+
+        QFileInfo fileInfo(m_filePath);
+        setWindowTitle(fileInfo.fileName());
+    } else {
+        QMessageBox::information(this, tr("Load failed"), tr("Unsupported audio file type."));
+    }
 }
 
+void MainWindow::on_actionOpen_triggered()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open Audio File"),
+                                                    QDir::homePath(),
+                                                    tr("Audio Files (*.mp3 *.ogg)"));
 
+    if (!filePath.isEmpty()) {
+        m_filePath = filePath;
+        loadFile();
+    }
+}

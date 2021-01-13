@@ -12,6 +12,9 @@ QVariant ChapterItem::data(int role) const
         if (data(ChapterTitle).isValid()) {
             return data(ChapterTitle);
         }
+        if (hasChildren()) {
+            return QObject::tr("Table of Contents");
+        }
         break;
     }
 
