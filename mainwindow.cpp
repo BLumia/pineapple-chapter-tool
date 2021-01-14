@@ -88,7 +88,7 @@ void MainWindow::loadFile()
         QMessageBox::information(
                     this, tr("Load failed"),
                     tr("Unsupported file type.\nThe supported file types are: %1.")
-                    .arg("mp3, ogg"));
+                    .arg("mp3, ogg, opus"));
     }
 }
 
@@ -96,7 +96,7 @@ void MainWindow::on_actionOpen_triggered()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open Audio File"),
                                                     QDir::homePath(),
-                                                    tr("Audio Files (*.mp3 *.ogg)"));
+                                                    tr("Audio Files (*.mp3 *.ogg *.opus)"));
 
     if (!filePath.isEmpty()) {
         m_filePath = filePath;

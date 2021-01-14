@@ -11,6 +11,8 @@
 
 #include <vorbisfile.h>
 
+#include <opusfile.h>
+
 #include <QDebug>
 #include <QMimeDatabase>
 #include <QTime>
@@ -28,6 +30,9 @@ bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
         return true;
     } else if (mimeType.inherits("audio/x-vorbis+ogg")) {
         loadFromVorbisFile(pathToFile);
+        return true;
+    } else if (mimeType.inherits("audio/x-opus+ogg")) {
+        loadFromOpusFile(pathToFile);
         return true;
     }
 
@@ -96,44 +101,21 @@ void ChapterTreeModel::loadFromMpegFile(const QString &pathToFile)
 }
 
 // spec: https://wiki.xiph.org/VorbisComment#Chapter_Extension
-//       https://wiki.xiph.org/Chapter_Extension
 void ChapterTreeModel::loadFromVorbisFile(const QString &pathToFile)
 {
-    constexpr int substrPos = sizeof("CHAPTERXXX") - 1;
-
-    ChapterItem * tocItem = m_manager.registerItem("pseudoTOC");
-    appendRow(tocItem);
-
     TagLib::Ogg::Vorbis::File file(pathToFile.toLocal8Bit().data());
     TagLib::Ogg::XiphComment * tags = file.tag();
-    if (tags) {
-        const TagLib::Ogg::FieldListMap & fieldMap = tags->fieldListMap();
-        for (const auto & kv : fieldMap) {
-            if (kv.first.startsWith("CHAPTER")) {
-                TagLib::String chapterId(kv.first.substr(0, substrPos));
-                TagLib::String subStr(kv.first.substr(substrPos));
 
-                QString value(QString::fromStdString(kv.second.toString().to8Bit()));
+    loadFromXiphComment(tags);
+}
 
-                ChapterItem * chapterItem = m_manager.registerItem(QString::fromStdString(chapterId.to8Bit()));
+// seems same as the vorbis one...
+void ChapterTreeModel::loadFromOpusFile(const QString &pathToFile)
+{
+    TagLib::Ogg::Opus::File file(pathToFile.toLocal8Bit().data());
+    TagLib::Ogg::XiphComment * tags = file.tag();
 
-                if (subStr.isEmpty()) {
-                    // CHAPTER001=00:00:00.000
-                    chapterItem->setItemProperty(ChapterStartTimeMs, QTime::fromString(value, QStringLiteral("hh:mm:ss.zzz")).msecsSinceStartOfDay());
-                    tocItem->appendRow(chapterItem);
-                } else if (subStr == "NAME") {
-                    // CHAPTER001NAME=Chapter 1
-                    chapterItem->setItemProperty(ChapterTitle, value);
-                } else if (subStr == "URL") {
-                    // CHAPTER001URL=http://...
-                    chapterItem->setItemProperty(ChapterUrl, value);
-                }
-                //std::cout << chapterId.to8Bit() << std::endl;
-            }
-            QString commentKey(QString::fromStdString(kv.first.to8Bit()));
-            //std::cout << kv.first.toCString() << " : " << kv.second.toString().toCString() << std::endl;
-        }
-    }
+    loadFromXiphComment(tags);
 }
 
 // actually only one item can be selected..
@@ -213,4 +195,42 @@ int ChapterTreeModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
     return 3;
+}
+
+// spec: https://wiki.xiph.org/Chapter_Extension
+void ChapterTreeModel::loadFromXiphComment(TagLib::Ogg::XiphComment *tags)
+{
+    constexpr int substrPos = sizeof("CHAPTERXXX") - 1;
+
+    ChapterItem * tocItem = m_manager.registerItem("pseudoTOC");
+    appendRow(tocItem);
+
+    if (tags) {
+        const TagLib::Ogg::FieldListMap & fieldMap = tags->fieldListMap();
+        for (const auto & kv : fieldMap) {
+            if (kv.first.startsWith("CHAPTER")) {
+                TagLib::String chapterId(kv.first.substr(0, substrPos));
+                TagLib::String subStr(kv.first.substr(substrPos));
+
+                QString value(QString::fromStdString(kv.second.toString().to8Bit()));
+
+                ChapterItem * chapterItem = m_manager.registerItem(QString::fromStdString(chapterId.to8Bit()));
+
+                if (subStr.isEmpty()) {
+                    // CHAPTER001=00:00:00.000
+                    chapterItem->setItemProperty(ChapterStartTimeMs, QTime::fromString(value, QStringLiteral("hh:mm:ss.zzz")).msecsSinceStartOfDay());
+                    tocItem->appendRow(chapterItem);
+                } else if (subStr == "NAME") {
+                    // CHAPTER001NAME=Chapter 1
+                    chapterItem->setItemProperty(ChapterTitle, value);
+                } else if (subStr == "URL") {
+                    // CHAPTER001URL=http://...
+                    chapterItem->setItemProperty(ChapterUrl, value);
+                }
+                //std::cout << chapterId.to8Bit() << std::endl;
+            }
+            QString commentKey(QString::fromStdString(kv.first.to8Bit()));
+            //std::cout << kv.first.toCString() << " : " << kv.second.toString().toCString() << std::endl;
+        }
+    }
 }
