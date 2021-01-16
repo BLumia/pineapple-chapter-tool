@@ -20,6 +20,7 @@ public:
     void loadFromMpegFile(const QString & pathToFile);
     void loadFromVorbisFile(const QString & pathToFile);
     void loadFromOpusFile(const QString & pathToFile);
+    void loadFromM4aFile(const QString & pathToFile);
 
     QModelIndex appendChapter(const QModelIndexList &selectedIndexes);
 

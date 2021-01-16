@@ -13,6 +13,10 @@
 
 #include <opusfile.h>
 
+#ifndef NO_LIBMP4V2
+#include <mp4v2/mp4v2.h>
+#endif // NO_LIBMP4V2
+
 #include <QDebug>
 #include <QMimeDatabase>
 #include <QTime>
@@ -34,6 +38,13 @@ bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
     } else if (mimeType.inherits("audio/x-opus+ogg")) {
         loadFromOpusFile(pathToFile);
         return true;
+    } else if (mimeType.inherits("audio/mp4")) {
+#ifdef NO_LIBMP4V2
+        return false;
+#else
+        loadFromM4aFile(pathToFile);
+        return true;
+#endif // NO_LIBMP4V2
     }
 
     qDebug() << mimeType;
@@ -116,6 +127,41 @@ void ChapterTreeModel::loadFromOpusFile(const QString &pathToFile)
     TagLib::Ogg::XiphComment * tags = file.tag();
 
     loadFromXiphComment(tags);
+}
+
+void ChapterTreeModel::loadFromM4aFile(const QString &pathToFile)
+{
+#ifndef NO_LIBMP4V2
+    MP4FileHandle hM4a = MP4Read(pathToFile.toStdString().c_str());
+    if (hM4a == MP4_INVALID_FILE_HANDLE ) {
+        return;
+    }
+
+    MP4Chapter_t * chapters = 0;
+    uint32_t chapterCount = 0;
+    MP4ChapterType chapterType = MP4GetChapters(hM4a, &chapters, &chapterCount, MP4ChapterTypeAny);
+    if (chapterCount == 0) {
+        return;
+    }
+
+    qDebug() << chapterType;
+
+    ChapterItem * tocItem = m_manager.registerItem("pseudoTOC");
+    appendRow(tocItem);
+
+    MP4Duration durationMs = 0;
+    for (uint32_t i = 0; i < chapterCount; ++i) {
+        ChapterItem * chapterItem = m_manager.registerItem(QString::number(durationMs));
+        chapterItem->setItemProperty(ChapterTitle, QString(chapters[i].title));
+        chapterItem->setItemProperty(ChapterStartTimeMs, static_cast<int>(durationMs));
+        tocItem->appendRow(chapterItem);
+//        qDebug() << "start:" << durationMs << chapters[i].title;
+        durationMs += chapters[i].duration;
+    }
+
+    MP4Free(chapters);
+
+#endif // NO_LIBMP4V2
 }
 
 // actually only one item can be selected..
