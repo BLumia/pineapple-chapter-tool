@@ -131,7 +131,9 @@ void ChapterTreeModel::loadFromOpusFile(const QString &pathToFile)
 
 void ChapterTreeModel::loadFromM4aFile(const QString &pathToFile)
 {
-#ifndef NO_LIBMP4V2
+#ifdef NO_LIBMP4V2
+    Q_UNUSED(pathToFile);
+#else // NO_LIBMP4V2
     MP4FileHandle hM4a = MP4Read(pathToFile.toStdString().c_str());
     if (hM4a == MP4_INVALID_FILE_HANDLE ) {
         return;
@@ -162,6 +164,99 @@ void ChapterTreeModel::loadFromM4aFile(const QString &pathToFile)
     MP4Free(chapters);
 
 #endif // NO_LIBMP4V2
+}
+
+bool ChapterTreeModel::saveToFile(const QString &pathToFile)
+{
+    QMimeDatabase db;
+    QMimeType mimeType = db.mimeTypeForFile(pathToFile);
+    if (mimeType.inherits("audio/mpeg")) {
+        return saveToMpegFile(pathToFile);
+    }
+
+    return false;
+}
+
+bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
+{
+    TagLib::MPEG::File file(pathToFile.toLocal8Bit().data());
+    ID3v2::Tag * id3v2Tag = file.ID3v2Tag(true);
+
+    Q_ASSERT(id3v2Tag != nullptr);
+
+    // remove all existed chapter frames.
+    id3v2Tag->removeFrames(TagLib::ByteVector("CTOC", 4));
+    id3v2Tag->removeFrames(TagLib::ByteVector("CHAP", 4));
+
+    QStandardItem * item = invisibleRootItem()->child(0);
+    if (item) {
+        ChapterItem * currentItem = static_cast<ChapterItem *>(item);
+        // if no item then no need to save chapters, if no children we are also no need
+        // to save a empty CTOC frame with no sub-chapters inside it.
+        if (currentItem && currentItem->hasChildren()) {
+            int nextCTOC = 0;
+            while (true) {
+                if (currentItem->hasChildren()) {
+                    // It's a TOC item, create a CTOC frame and iterator all its children
+                    char tocElementId[24];
+                    snprintf(tocElementId, 24, "toc%d", nextCTOC);
+                    int childrenCount = currentItem->rowCount();
+                    TagLib::ByteVectorList elementIdList;
+                    for (int i = 0; i < childrenCount; i++) {
+                        char chapterElementId[24];
+                        snprintf(chapterElementId, 24, "chp%d_%d", nextCTOC, i);
+                        elementIdList.append(chapterElementId);
+                    }
+                    ID3v2::TableOfContentsFrame * tocFrame = new ID3v2::TableOfContentsFrame(
+                        TagLib::ByteVector(tocElementId, strlen(tocElementId)),
+                        elementIdList
+                    );
+                    id3v2Tag->addFrame(tocFrame);
+
+                    nextCTOC++;
+
+                    QStandardItem * nextItem = currentItem->child(0);
+                    currentItem = static_cast<ChapterItem *>(nextItem);
+                } else {
+                    // It's a chapter item, create a CHAP frame, and move to next item
+                    ID3v2::FrameList subFrameList;
+                    char chapterElementId[24];
+                    snprintf(chapterElementId, 24, "chp%d_%d", nextCTOC - 1, currentItem->row());
+
+                    QString chapterTitle(currentItem->data(ChapterTitle).toString());
+                    if (!chapterTitle.isEmpty()) {
+                        TagLib::String titleStr(chapterTitle.toStdString());
+                        ID3v2::TextIdentificationFrame * chapterTitleFrane = new ID3v2::TextIdentificationFrame(
+                            "TIT2", TagLib::String::Latin1
+                        );
+                        chapterTitleFrane->setText(titleStr);
+                        subFrameList.append(chapterTitleFrane);
+                    }
+
+                    ID3v2::ChapterFrame * chapterFrame = new ID3v2::ChapterFrame(
+                        TagLib::ByteVector(chapterElementId, strlen(chapterElementId)),
+                        currentItem->data(ChapterStartTimeMs).toInt(),
+                        currentItem->data(ChapterEndTimeMs).toInt(),
+                        ~0u, ~0u,
+                        subFrameList
+                    );
+                    id3v2Tag->addFrame(chapterFrame);
+
+                    QModelIndex nextItemModel = indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
+                    if (nextItemModel.isValid()) {
+                        QStandardItem * nextItem = itemFromIndex(nextItemModel);
+                        currentItem = static_cast<ChapterItem *>(nextItem);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    file.save();
+
+    return true;
 }
 
 // actually only one item can be selected..

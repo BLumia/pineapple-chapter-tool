@@ -84,6 +84,8 @@ void MainWindow::loadFile()
 
         QFileInfo fileInfo(m_filePath);
         setWindowTitle(fileInfo.fileName());
+
+        ui->actionSave->setEnabled(true);
     } else {
         QMessageBox::information(
                     this, tr("Load failed"),
@@ -102,6 +104,23 @@ void MainWindow::on_actionOpen_triggered()
         m_filePath = filePath;
         loadFile();
     }
+}
+
+
+void MainWindow::on_actionSave_triggered()
+{
+    QAbstractItemModel * currentModel = ui->treeView->model();
+    ChapterTreeModel * chapterModel = qobject_cast<ChapterTreeModel *>(currentModel);
+    QFileInfo currentFile(m_filePath);
+
+    if (!chapterModel) return;
+    if (!currentFile.exists()) return;
+
+    QString filePath = QFileDialog::getSaveFileName(this, tr("Save Audio File with Chapters"),
+                                                    currentFile.absolutePath(),
+                                                    tr("Audio Files (*.mp3 *.ogg *.opus)"));
+
+    chapterModel->saveToFile(filePath);
 }
 
 void MainWindow::on_treeView_viewSelectionChanged()
@@ -133,3 +152,4 @@ void MainWindow::on_removeBtn_clicked()
         ui->treeView->model()->removeRow(selectedIndex[0].row(), selectedIndex[0].parent());
     }
 }
+

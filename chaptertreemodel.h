@@ -22,6 +22,9 @@ public:
     void loadFromOpusFile(const QString & pathToFile);
     void loadFromM4aFile(const QString & pathToFile);
 
+    bool saveToFile(const QString & pathToFile);
+    bool saveToMpegFile(const QString & pathToFile);
+
     QModelIndex appendChapter(const QModelIndexList &selectedIndexes);
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
