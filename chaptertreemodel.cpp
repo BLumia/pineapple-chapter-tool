@@ -211,6 +211,7 @@ bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
                         TagLib::ByteVector(tocElementId, strlen(tocElementId)),
                         elementIdList
                     );
+                    tocFrame->setIsTopLevel(nextCTOC == 0);
                     id3v2Tag->addFrame(tocFrame);
 
                     nextCTOC++;
