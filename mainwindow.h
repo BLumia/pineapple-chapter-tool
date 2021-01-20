@@ -7,6 +7,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+class ChapterTreeModel;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -28,8 +29,11 @@ private slots:
     void on_appendChapterBtn_clicked();
     void on_removeBtn_clicked();
 
+    void on_importBtn_clicked();
+
 private:
     void loadFile();
+    void importFromLines(ChapterTreeModel *model, const QStringList &lines);
 
 private:
     Ui::MainWindow *ui;

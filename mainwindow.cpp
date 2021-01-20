@@ -14,9 +14,12 @@
 #include <attachedpictureframe.h>
 
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
+#include <QRegularExpression>
+#include <QTime>
 
 #include <QDebug>
 
@@ -94,6 +97,39 @@ void MainWindow::loadFile()
     }
 }
 
+QTime timeFromString(const QString & timeStr)
+{
+    switch (timeStr.count(':')) {
+    case 0:
+        return QTime::fromString(timeStr, "s");
+    case 1:
+        return QTime::fromString(timeStr, "m:s");
+    default:
+        return QTime::fromString(timeStr, "h:m:s");
+    }
+}
+
+void MainWindow::importFromLines(ChapterTreeModel * model, const QStringList &lines)
+{
+    Q_CHECK_PTR(model);
+
+    model->clearChapterTreeButKeepTOC();
+    // This regex see: https://stackoverflow.com/questions/8318236/
+    QRegularExpression timeRegex(QStringLiteral(R"((?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d))"));
+    for (QString line : lines) {
+        QRegularExpressionMatch match(timeRegex.match(line));
+        qDebug() << match.capturedTexts() << match.hasMatch();
+        if (match.hasMatch()) {
+            const QString timeStr(match.capturedTexts()[0]);
+            line.remove(timeStr);
+            line = line.trimmed();
+            QTime startTime(timeFromString(timeStr));
+            qDebug() << startTime << startTime.msecsSinceStartOfDay();
+            model->appendChapter(startTime.msecsSinceStartOfDay(), line);
+        }
+    }
+}
+
 void MainWindow::on_actionOpen_triggered()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open Audio File"),
@@ -153,3 +189,15 @@ void MainWindow::on_removeBtn_clicked()
     }
 }
 
+
+void MainWindow::on_importBtn_clicked()
+{
+    ChapterTreeModel * model = qobject_cast<ChapterTreeModel *>(ui->treeView->model());
+    if (model) {
+        QString text = QInputDialog::getMultiLineText(this, tr("single line chapters"), tr("Sample:\n1:23:45 Chapter title"));
+        if (!text.isEmpty()) {
+            importFromLines(model, text.split('\n'));
+        }
+    }
+    //
+}

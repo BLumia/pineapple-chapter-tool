@@ -43,3 +43,13 @@ ChapterItem *ChapterTreeManager::registerItem(const QString &elementId)
 
     return result;
 }
+
+void ChapterTreeManager::setAudioLengthMs(int len)
+{
+    m_audioLengthMs = len;
+}
+
+int ChapterTreeManager::audioLengthMs() const
+{
+    return m_audioLengthMs;
+}

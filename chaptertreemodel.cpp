@@ -1,5 +1,7 @@
 #include "chaptertreemodel.h"
 
+#include <fileref.h>
+
 #include <mpegfile.h>
 #include <id3v2tag.h>
 #include <chapterframe.h>
@@ -55,6 +57,8 @@ bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
 // spec: https://id3.org/id3v2-chapters-1.0
 void ChapterTreeModel::loadFromMpegFile(const QString &pathToFile)
 {
+    loadAudioPropertiesFromTagLib(pathToFile);
+
     TagLib::MPEG::File file(pathToFile.toLocal8Bit().data());
     ID3v2::Tag * id3v2Tag = file.ID3v2Tag();
     if (id3v2Tag) {
@@ -179,6 +183,8 @@ bool ChapterTreeModel::saveToFile(const QString &pathToFile)
 
 bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
 {
+    fillAllEndTimeMs();
+
     TagLib::MPEG::File file(pathToFile.toLocal8Bit().data());
     ID3v2::Tag * id3v2Tag = file.ID3v2Tag(true);
 
@@ -260,31 +266,52 @@ bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
     return true;
 }
 
+bool ChapterTreeModel::clearChapterTreeButKeepTOC()
+{
+    QStandardItem * parentItem = invisibleRootItem()->child(0);
+    if (parentItem) {
+        QModelIndex tocIndex(indexFromItem(parentItem));
+        removeRows(0, parentItem->rowCount(), tocIndex);
+    }
+}
+
 // actually only one item can be selected..
 QModelIndex ChapterTreeModel::appendChapter(const QModelIndexList &selectedIndexes)
 {
     QModelIndex parent;
     int row = -1;
+    int startTimeMs = 0;
+    QString chapterName(QStringLiteral("New Chapter"));
+    bool hasSelected = false;
 
     if (!selectedIndexes.isEmpty()) {
         parent = selectedIndexes[0].parent();
         row = selectedIndexes[0].row();
+        hasSelected = true;
     }
 
     QStandardItem * parentItem = parent.isValid() ? itemFromIndex(parent)
                                                   : invisibleRootItem()->child(0);
 
-    ChapterItem * newChapter = new ChapterItem();
-    newChapter->setColumnCount(3);
-    newChapter->setItemProperty(FrameId, "CHAP");
-    newChapter->setItemProperty(ChapterTitle, "New Chapter");
-    if (row != -1) {
-        parentItem->insertRow(row + 1, newChapter);
-    } else {
-        parentItem->appendRow(newChapter);
+    ChapterItem * selectedChapter = hasSelected ? static_cast<ChapterItem *>(itemFromIndex(selectedIndexes[0]))
+                                                : nullptr;
+    if (selectedChapter) {
+        startTimeMs = selectedChapter->data(ChapterStartTimeMs).toInt();
     }
 
-    return indexFromItem(newChapter);
+    return appendChapter(parentItem, chapterName, startTimeMs, row);
+}
+
+QModelIndex ChapterTreeModel::appendChapter(int startTimeMs, const QString &title)
+{
+    QStandardItem * parentItem = invisibleRootItem()->child(0);
+    if (!parentItem) {
+        ChapterItem * tocItem = m_manager.registerItem("presudoTOC");
+        tocItem->setItemProperty(FrameId, "CTOC");
+        appendRow(tocItem);
+        parentItem = tocItem;
+    }
+    return appendChapter(parentItem, title, startTimeMs);
 }
 
 QVariant ChapterTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -339,6 +366,57 @@ int ChapterTreeModel::columnCount(const QModelIndex &parent) const
     return 3;
 }
 
+void ChapterTreeModel::fillAllEndTimeMs()
+{
+    QStandardItem * item = invisibleRootItem()->child(0);
+    if (item) {
+        ChapterItem * currentItem = static_cast<ChapterItem *>(item);
+        ChapterItem * prevChapterItem = nullptr;
+        if (currentItem && currentItem->hasChildren()) {
+            while (true) {
+                if (currentItem->hasChildren()) {
+                    // TOC item, just go to its child item.
+                    QStandardItem * nextItem = currentItem->child(0);
+                    currentItem = static_cast<ChapterItem *>(nextItem);
+                } else {
+                    // It's a chapter item
+                    // Check if we should fill the end time of previous chapter.
+                    if (prevChapterItem && prevChapterItem->data(ChapterEndTimeMs).isNull()) {
+                        prevChapterItem->setItemProperty(ChapterEndTimeMs, currentItem->data(ChapterStartTimeMs));
+                    }
+
+                    prevChapterItem = currentItem;
+                    QModelIndex nextItemModel = indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
+                    if (nextItemModel.isValid()) {
+                        QStandardItem * nextItem = itemFromIndex(nextItemModel);
+                        currentItem = static_cast<ChapterItem *>(nextItem);
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            // last one.
+            if (prevChapterItem && prevChapterItem->data(ChapterEndTimeMs).isNull()) {
+                prevChapterItem->setItemProperty(ChapterEndTimeMs, m_manager.audioLengthMs());
+            }
+        }
+    }
+}
+
+bool ChapterTreeModel::loadAudioPropertiesFromTagLib(const QString &pathToFile)
+{
+    TagLib::FileRef fileRef(pathToFile.toLocal8Bit().data());
+
+    if (!fileRef.isNull() && fileRef.audioProperties()) {
+        TagLib::AudioProperties *prop = fileRef.audioProperties();
+        m_manager.setAudioLengthMs(prop->lengthInMilliseconds());
+        return true;
+    }
+
+    return false;
+}
+
 // spec: https://wiki.xiph.org/Chapter_Extension
 void ChapterTreeModel::loadFromXiphComment(TagLib::Ogg::XiphComment *tags)
 {
@@ -375,4 +453,20 @@ void ChapterTreeModel::loadFromXiphComment(TagLib::Ogg::XiphComment *tags)
             //std::cout << kv.first.toCString() << " : " << kv.second.toString().toCString() << std::endl;
         }
     }
+}
+
+QModelIndex ChapterTreeModel::appendChapter(QStandardItem *parentItem, const QString &title, int startTimeMs, int rowAt)
+{
+    ChapterItem * newChapter = new ChapterItem();
+    newChapter->setColumnCount(3);
+    newChapter->setItemProperty(FrameId, "CHAP");
+    newChapter->setItemProperty(ChapterTitle, title);
+    newChapter->setItemProperty(ChapterStartTimeMs, startTimeMs);
+    if (rowAt != -1) {
+        parentItem->insertRow(rowAt + 1, newChapter);
+    } else {
+        parentItem->appendRow(newChapter);
+    }
+
+    return indexFromItem(newChapter);
 }
