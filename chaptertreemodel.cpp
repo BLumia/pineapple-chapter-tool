@@ -176,6 +176,10 @@ bool ChapterTreeModel::saveToFile(const QString &pathToFile)
     QMimeType mimeType = db.mimeTypeForFile(pathToFile);
     if (mimeType.inherits("audio/mpeg")) {
         return saveToMpegFile(pathToFile);
+    } else if (mimeType.inherits("audio/x-vorbis+ogg")) {
+        return saveToVorbisFile(pathToFile);
+    } else if (mimeType.inherits("audio/x-opus+ogg")) {
+        return saveToOpusFile(pathToFile);
     }
 
     return false;
@@ -193,6 +197,14 @@ bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
     // remove all existed chapter frames.
     id3v2Tag->removeFrames(TagLib::ByteVector("CTOC", 4));
     id3v2Tag->removeFrames(TagLib::ByteVector("CHAP", 4));
+
+    if (id3v2Tag->title().isEmpty() && id3v2Tag->comment().isEmpty()) {
+        // set a non-empty title or comment here. (haven't try other attr)
+        // if we don't do this for mp3 file that didn't have ID3 tag before,
+        // potplayer won't display ID3v2 chapter info at all.
+        // it can be a taglib bug or a potplayer bug.
+        id3v2Tag->setComment("Pineapple Chapter Tool :)");
+    }
 
     QStandardItem * item = invisibleRootItem()->child(0);
     if (item) {
@@ -232,7 +244,7 @@ bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
 
                     QString chapterTitle(currentItem->data(ChapterTitle).toString());
                     if (!chapterTitle.isEmpty()) {
-                        TagLib::String titleStr(chapterTitle.toStdString());
+                        TagLib::String titleStr(chapterTitle.toStdString(), TagLib::String::UTF8);
                         ID3v2::TextIdentificationFrame * chapterTitleFrane = new ID3v2::TextIdentificationFrame(
                             "TIT2", TagLib::String::Latin1
                         );
@@ -266,13 +278,40 @@ bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
     return true;
 }
 
+bool ChapterTreeModel::saveToVorbisFile(const QString &pathToFile)
+{
+    TagLib::Ogg::Vorbis::File file(pathToFile.toLocal8Bit().data());
+    TagLib::Ogg::XiphComment * tags = file.tag();
+
+    Q_CHECK_PTR(tags);
+
+    saveToXiphComment(tags);
+
+    return file.save();
+}
+
+bool ChapterTreeModel::saveToOpusFile(const QString &pathToFile)
+{
+    TagLib::Ogg::Opus::File file(pathToFile.toLocal8Bit().data());
+    TagLib::Ogg::XiphComment * tags = file.tag();
+
+    Q_CHECK_PTR(tags);
+
+    saveToXiphComment(tags);
+
+    return file.save();
+}
+
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
 {
     QStandardItem * parentItem = invisibleRootItem()->child(0);
     if (parentItem) {
         QModelIndex tocIndex(indexFromItem(parentItem));
         removeRows(0, parentItem->rowCount(), tocIndex);
+        return true;
     }
+
+    return false;
 }
 
 // actually only one item can be selected..
@@ -453,6 +492,56 @@ void ChapterTreeModel::loadFromXiphComment(TagLib::Ogg::XiphComment *tags)
             //std::cout << kv.first.toCString() << " : " << kv.second.toString().toCString() << std::endl;
         }
     }
+}
+
+bool ChapterTreeModel::saveToXiphComment(TagLib::Ogg::XiphComment *xiphComment)
+{
+    if (!xiphComment) return false;
+
+    // before we start, let's remove all existed chapters...
+    const TagLib::Ogg::FieldListMap & fieldMap = xiphComment->fieldListMap();
+    TagLib::StringList needRemoved;
+    for (const auto & kv : fieldMap) {
+        if (kv.first.startsWith("CHAPTER")) {
+            needRemoved.append(kv.first);
+        }
+    }
+    for (const TagLib::String & fieldName : needRemoved) {
+        xiphComment->removeFields(fieldName);
+    }
+
+    QStandardItem * item = invisibleRootItem()->child(0);
+    if (item && item->hasChildren()) {
+        // get ready to write our new chapter list.
+        ChapterItem * currentItem = static_cast<ChapterItem *>(item->child(0));
+        int currentChapterNumber = 1; // yeah it starts from 1.
+        while (true) {
+            // CHAPTER001=00:00:00.000
+            char chapterTime[11]; // CHAPTERXXX
+            snprintf(chapterTime, 11, "CHAPTER%03d", currentChapterNumber);
+            QTime startTime(QTime::fromMSecsSinceStartOfDay(currentItem->data(ChapterStartTimeMs).toInt()));
+            TagLib::String timeStr(startTime.toString("hh:mm:ss.zzz").toStdString(), TagLib::String::UTF8);
+            xiphComment->addField(chapterTime, timeStr);
+
+            if (currentItem->data(ChapterTitle).isValid()) {
+                char chapterName[15]; // CHAPTERXXXNAME
+                snprintf(chapterName, 15, "CHAPTER%03dNAME", currentChapterNumber);
+                TagLib::String titleStr(currentItem->data(ChapterTitle).toString().toStdString(), TagLib::String::UTF8);
+                xiphComment->addField(chapterName, titleStr);
+            }
+
+            currentChapterNumber++;
+            QModelIndex nextItemModel = indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
+            if (nextItemModel.isValid()) {
+                QStandardItem * nextItem = itemFromIndex(nextItemModel);
+                currentItem = static_cast<ChapterItem *>(nextItem);
+            } else {
+                break;
+            }
+        }
+    }
+
+    return true;
 }
 
 QModelIndex ChapterTreeModel::appendChapter(QStandardItem *parentItem, const QString &title, int startTimeMs, int rowAt)

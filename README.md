@@ -19,7 +19,11 @@ This tool can be used to add chapter information to audio files. MP3, OGG, and M
 ## CLA
 
 ```
-By sending patches in GitHub Pull Request, Issues, email patch set, or any other form to this project, it is assumed that you are offering the Pineapple Chapter Tools project and the original project author (Gary Wang) unlimited, non-exclusive right to reuse, modify, and relicense the code.
+By sending patches in GitHub Pull Request, Issues, email patch 
+set, or any other form to this project, it is assumed that you
+are offering the Pineapple Chapter Tools project and the original
+project author (Gary Wang) unlimited, non-exclusive right to
+reuse, modify, and relicense the code.
 ```
 
 This is important because the inability to relicense code has caused devastating problems for other Free Software projects (such as KDE and NASM). Pineapple Chapter Tool will always be available in an OSI approved, DFSG-compatible license. If you wish to specify special license conditions of your contributions, just say so when you send them.

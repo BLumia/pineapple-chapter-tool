@@ -24,6 +24,8 @@ public:
 
     bool saveToFile(const QString & pathToFile);
     bool saveToMpegFile(const QString & pathToFile);
+    bool saveToVorbisFile(const QString & pathToFile);
+    bool saveToOpusFile(const QString & pathToFile);
 
     bool clearChapterTreeButKeepTOC();
     QModelIndex appendChapter(const QModelIndexList &selectedIndexes);
@@ -37,6 +39,7 @@ private:
     void fillAllEndTimeMs();
     bool loadAudioPropertiesFromTagLib(const QString & pathToFile);
     void loadFromXiphComment(TagLib::Ogg::XiphComment * tags);
+    bool saveToXiphComment(TagLib::Ogg::XiphComment * xiphComment);
     QModelIndex appendChapter(QStandardItem * parentItem, const QString & title, int startTimeMs, int rowAt = -1);
 
 private:
