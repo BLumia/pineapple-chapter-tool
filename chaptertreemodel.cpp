@@ -309,6 +309,7 @@ bool ChapterTreeModel::saveToOpusFile(const QString &pathToFile)
     return file.save();
 }
 
+#ifndef NO_LIBMP4V2
 MP4TrackId getFirstAudioTrack(MP4FileHandle file, bool & out_isVideoTrack)
 {
     uint32_t trackCnt = MP4GetNumberOfTracks(file);
@@ -333,6 +334,7 @@ MP4TrackId getFirstAudioTrack(MP4FileHandle file, bool & out_isVideoTrack)
 
     return firstTrackId;
 }
+#endif // NO_LIBMP4V2
 
 bool ChapterTreeModel::saveToM4aFile(const QString &pathToFile)
 {
