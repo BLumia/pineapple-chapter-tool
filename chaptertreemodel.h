@@ -26,6 +26,7 @@ public:
     bool saveToMpegFile(const QString & pathToFile);
     bool saveToVorbisFile(const QString & pathToFile);
     bool saveToOpusFile(const QString & pathToFile);
+    bool saveToM4aFile(const QString & pathToFile);
 
     bool clearChapterTreeButKeepTOC();
     QModelIndex appendChapter(const QModelIndexList &selectedIndexes);

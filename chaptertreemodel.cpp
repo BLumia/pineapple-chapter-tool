@@ -155,7 +155,7 @@ void ChapterTreeModel::loadFromM4aFile(const QString &pathToFile)
     ChapterItem * tocItem = m_manager.registerItem("pseudoTOC");
     appendRow(tocItem);
 
-    MP4Duration durationMs = 0;
+    MP4Duration durationMs = 0; // yeah, it's in msec since m4a chapter marker tracks uses scale 1000.
     for (uint32_t i = 0; i < chapterCount; ++i) {
         ChapterItem * chapterItem = m_manager.registerItem(QString::number(durationMs));
         chapterItem->setItemProperty(ChapterTitle, QString(chapters[i].title));
@@ -166,6 +166,7 @@ void ChapterTreeModel::loadFromM4aFile(const QString &pathToFile)
     }
 
     MP4Free(chapters);
+    MP4Close(hM4a);
 
 #endif // NO_LIBMP4V2
 }
@@ -180,6 +181,12 @@ bool ChapterTreeModel::saveToFile(const QString &pathToFile)
         return saveToVorbisFile(pathToFile);
     } else if (mimeType.inherits("audio/x-opus+ogg")) {
         return saveToOpusFile(pathToFile);
+    } else if (mimeType.inherits("audio/mp4")) {
+#ifdef NO_LIBMP4V2
+        return false;
+#else
+        return saveToM4aFile(pathToFile);
+#endif // NO_LIBMP4V2
     }
 
     return false;
@@ -300,6 +307,108 @@ bool ChapterTreeModel::saveToOpusFile(const QString &pathToFile)
     saveToXiphComment(tags);
 
     return file.save();
+}
+
+MP4TrackId getFirstAudioTrack(MP4FileHandle file, bool & out_isVideoTrack)
+{
+    uint32_t trackCnt = MP4GetNumberOfTracks(file);
+    if (trackCnt == 0) return MP4_INVALID_TRACK_ID;
+
+    out_isVideoTrack = false;
+
+    MP4TrackId firstTrackId = MP4_INVALID_TRACK_ID;
+    for (uint32_t i = 0; i < trackCnt; i++) {
+        MP4TrackId id = MP4FindTrackId(file, i);
+        const char * type = MP4GetTrackType(file, id);
+        if (MP4_IS_VIDEO_TRACK_TYPE(type)) {
+            firstTrackId = id;
+            out_isVideoTrack = true;
+            break;
+        } else if (MP4_IS_AUDIO_TRACK_TYPE(type)) {
+            firstTrackId = id;
+            out_isVideoTrack = false;
+            break;
+        }
+    }
+
+    return firstTrackId;
+}
+
+bool ChapterTreeModel::saveToM4aFile(const QString &pathToFile)
+{
+#ifdef NO_LIBMP4V2
+    Q_UNUSED(pathToFile);
+#else // NO_LIBMP4V2
+    MP4FileHandle hM4a = MP4Modify(pathToFile.toStdString().c_str());
+    if (hM4a == MP4_INVALID_FILE_HANDLE) {
+        return false;
+    }
+
+    std::vector<MP4Chapter_t> chapters;
+
+    // before we start, let's remove all existed chapters...
+    MP4DeleteChapters(hM4a, MP4ChapterTypeAny);
+
+    QStandardItem * item = invisibleRootItem()->child(0);
+    if (item && item->hasChildren()) {
+        // get ready to write our new chapter list.
+        ChapterItem * currentItem = static_cast<ChapterItem *>(item->child(0));
+        while (true) {
+            MP4Chapter_t chap;
+
+            std::string chapterTitle(currentItem->data(ChapterTitle).toString().toStdString());
+            size_t titleLen = qMin(chapterTitle.length(), (size_t)MP4V2_CHAPTER_TITLE_MAX);
+            strncpy(chap.title, chapterTitle.c_str(), titleLen);
+            chap.title[titleLen] = 0;
+            chap.duration = currentItem->data(ChapterStartTimeMs).toUInt();
+
+            chapters.push_back(chap);
+
+            QModelIndex nextItemModel = indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
+            if (nextItemModel.isValid()) {
+                QStandardItem * nextItem = itemFromIndex(nextItemModel);
+                currentItem = static_cast<ChapterItem *>(nextItem);
+            } else {
+                break;
+            }
+        }
+    }
+
+    bool isVideoTrack = false;
+    MP4TrackId firstTrackId = getFirstAudioTrack(hM4a, isVideoTrack);
+    if (!MP4_IS_VALID_TRACK_ID(firstTrackId)) {
+        return false;
+    }
+
+    MP4Duration durationTicks = MP4GetTrackDuration(hM4a, firstTrackId);
+    uint32_t tickPerSec = MP4GetTrackTimeScale(hM4a, firstTrackId);
+    uint32_t durationMs = durationTicks * 1.0 / tickPerSec * 1000;
+
+    // check out-of-duration chapter markers
+    for(std::vector<MP4Chapter_t>::iterator it = chapters.begin(); it != chapters.end(); ) {
+        if (durationMs <= it->duration) {
+            it = chapters.erase(it);
+        } else {
+            it++;
+        }
+    }
+
+    for(std::vector<MP4Chapter_t>::iterator it = chapters.begin(); it != chapters.end(); it++) {
+        MP4Duration currDuration = (*it).duration;
+        MP4Duration nextDuration =  chapters.end() == it + 1 ? durationMs : (*(it+1)).duration;
+
+        (*it).duration = nextDuration - currDuration;
+    }
+
+    // finally, apply chapter markers
+    MP4SetChapters(hM4a, &chapters[0], (uint32_t)chapters.size(), MP4ChapterTypeAny);
+    MP4Close(hM4a);
+
+    // This is optional.
+    MP4Optimize(pathToFile.toStdString().c_str());
+
+    return true;
+#endif // NO_LIBMP4V2
 }
 
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
