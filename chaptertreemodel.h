@@ -38,7 +38,6 @@ public:
 
 private:
     void fillAllEndTimeMs();
-    bool loadAudioPropertiesFromTagLib(const QString & pathToFile);
     void loadFromXiphComment(TagLib::Ogg::XiphComment * tags);
     bool saveToXiphComment(TagLib::Ogg::XiphComment * xiphComment);
     QModelIndex appendChapter(QStandardItem * parentItem, const QString & title, int startTimeMs, int rowAt = -1);

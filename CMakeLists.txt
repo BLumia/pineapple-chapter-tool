@@ -10,7 +10,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set (EXE_NAME pchaptertool)
@@ -23,6 +23,11 @@ find_package(Mp4v2)
 pkg_check_modules(TagLib REQUIRED taglib)
 
 add_executable(${EXE_NAME}
+    filehandlerinterface.h
+    filehandlerinterface.cpp
+    mpegfilehandler.h
+    mpegfilehandler.cpp
+
     main.cpp
     chaptertreemanager.cpp
     chaptertreemanager.h
