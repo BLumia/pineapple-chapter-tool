@@ -107,8 +107,8 @@ MP4TrackId getFirstAudioTrack(MP4FileHandle file, bool & out_isVideoTrack)
 FileHandlerInterface::Status Mp4FileHandler::writeToFile(ChapterItem *chapterRoot)
 {
 #ifdef NO_LIBMP4V2
-    Q_UNUSED(pathToFile);
-    return false;
+    Q_UNUSED(chapterRoot);
+    return EXPORT_NOT_SUPPORTED;
 #else // NO_LIBMP4V2
     MP4FileHandle hM4a = MP4Modify(m_file.toStdString().c_str());
     if (hM4a == MP4_INVALID_FILE_HANDLE) {
