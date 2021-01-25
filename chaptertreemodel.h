@@ -37,9 +37,6 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
 private:
-    void fillAllEndTimeMs();
-    void loadFromXiphComment(TagLib::Ogg::XiphComment * tags);
-    bool saveToXiphComment(TagLib::Ogg::XiphComment * xiphComment);
     QModelIndex appendChapter(QStandardItem * parentItem, const QString & title, int startTimeMs, int rowAt = -1);
 
 private:

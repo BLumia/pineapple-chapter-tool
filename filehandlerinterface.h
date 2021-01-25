@@ -17,6 +17,7 @@ public:
     enum Status {
         SUCCESS,
         NO_FILE_LOADED, // forget to call setFile()
+        FILE_STAT_ERROR, // any error during file loading.
         IMPORT_NOT_SUPPORTED,
         EXPORT_NOT_SUPPORTED,
         DURATION_REQUIRED, // need to set duration manually.

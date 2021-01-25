@@ -27,6 +27,14 @@ add_executable(${EXE_NAME}
     filehandlerinterface.cpp
     mpegfilehandler.h
     mpegfilehandler.cpp
+    taglibutils_p.h
+    taglibutils_p.cpp
+    vorbisfilehandler.h
+    vorbisfilehandler.cpp
+    opusfilehandler.h
+    opusfilehandler.cpp
+    mp4filehandler.h
+    mp4filehandler.cpp
 
     main.cpp
     chaptertreemanager.cpp
