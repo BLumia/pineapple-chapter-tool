@@ -21,6 +21,7 @@ FileHandlerInterface::Status OpusFileHandler::setFile(const QString filePath)
     return SUCCESS;
 }
 
+// seems same as the vorbis one...
 ChapterItem *OpusFileHandler::createChapterTree() const
 {
     if (m_file.isEmpty()) return nullptr;

@@ -21,6 +21,7 @@ FileHandlerInterface::Status VorbisFileHandler::setFile(const QString filePath)
     return SUCCESS;
 }
 
+// spec: https://wiki.xiph.org/VorbisComment#Chapter_Extension
 ChapterItem *VorbisFileHandler::createChapterTree() const
 {
     if (m_file.isEmpty()) return nullptr;

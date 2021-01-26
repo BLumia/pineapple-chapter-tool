@@ -36,6 +36,9 @@ add_executable(${EXE_NAME}
     mp4filehandler.h
     mp4filehandler.cpp
 
+    filehandlermanager.h
+    filehandlermanager.cpp
+
     main.cpp
     chaptertreemanager.cpp
     chaptertreemanager.h

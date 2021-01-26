@@ -70,6 +70,7 @@ FileHandlerInterface::Status MpegFileHandler::setFile(const QString filePath)
     return SUCCESS;
 }
 
+// spec: https://id3.org/id3v2-chapters-1.0
 ChapterItem * MpegFileHandler::createChapterTree() const
 {
     if (m_file.isEmpty()) return nullptr;

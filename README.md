@@ -16,6 +16,19 @@ This tool can be used to add chapter information to audio files. MP3, OGG, and M
  - For OGG files, Chapter Extension inside Xiph Vorbis Comment will be used.
  - For M4A files, chapters will be saved into a chapter track.
 
+### For the players...
+
+|                  | mp3          | ogg(vorbis/opus)    | m4a     |
+| ---------------- | ------------ | ------------------- | ------- |
+| mpv              | Yes          | Yes                 | Yes     |
+| VLC (PC)         | Partial [^1] | Yes                 | Yes     |
+| PotPlayer        | Yes [^2]     | Yes                 | Yes     |
+| iTunes (Windows) | No           | No Playback Support | Yes[^3] |
+
+[^1]: VLC 3.x doesn't support it at all, VLC 4.x doesn't display MP3 chapter markers on timeline, some of MP3 files are not recognized ([BUG](https://trac.videolan.org/vlc/ticket/7485)).
+[^2]: PotPlayer require MP3 file have at least one field not be empty in a general ID3v2 tag to display chapter frame correctly. 
+[^3]: iTunes (Windows) doesn't display M4A chapter markers on timeline.
+
 ## CLA
 
 ```

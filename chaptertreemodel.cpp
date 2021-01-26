@@ -1,9 +1,7 @@
 #include "chaptertreemodel.h"
 
-#include "mp4filehandler.h"
-#include "mpegfilehandler.h"
-#include "opusfilehandler.h"
-#include "vorbisfilehandler.h"
+#include "filehandlermanager.h"
+#include "filehandlerinterface.h"
 
 #include <QDebug>
 #include <QMimeDatabase>
@@ -15,22 +13,16 @@ bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
 
     QMimeDatabase db;
     QMimeType mimeType = db.mimeTypeForFile(pathToFile);
-    if (mimeType.inherits("audio/mpeg")) {
-        loadFromMpegFile(pathToFile);
+
+    FileHandlerInterface * handler = FileHandlerManager::instance()->createHandlerByMimeType(mimeType);
+    if (handler) {
+        handler->setFile(pathToFile);
+        handler->importFromFile();
+        ChapterItem * created = handler->createChapterTree();
+        if (created) {
+            appendRow(created);
+        }
         return true;
-    } else if (mimeType.inherits("audio/x-vorbis+ogg")) {
-        loadFromVorbisFile(pathToFile);
-        return true;
-    } else if (mimeType.inherits("audio/x-opus+ogg")) {
-        loadFromOpusFile(pathToFile);
-        return true;
-    } else if (mimeType.inherits("audio/mp4")) {
-#ifdef NO_LIBMP4V2
-        return false;
-#else
-        loadFromM4aFile(pathToFile);
-        return true;
-#endif // NO_LIBMP4V2
     }
 
     qDebug() << mimeType;
@@ -38,124 +30,23 @@ bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
     return false;
 }
 
-// spec: https://id3.org/id3v2-chapters-1.0
-void ChapterTreeModel::loadFromMpegFile(const QString &pathToFile)
-{
-    MpegFileHandler mfh;
-    mfh.setFile(pathToFile);
-    mfh.importFromFile();
-    ChapterItem * created = mfh.createChapterTree();
-
-    if (created) {
-        appendRow(created);
-    }
-}
-
-// spec: https://wiki.xiph.org/VorbisComment#Chapter_Extension
-void ChapterTreeModel::loadFromVorbisFile(const QString &pathToFile)
-{
-    VorbisFileHandler vfh;
-    vfh.setFile(pathToFile);
-    vfh.importFromFile();
-    ChapterItem * created = vfh.createChapterTree();
-
-    if (created) {
-        appendRow(created);
-    }
-}
-
-// seems same as the vorbis one...
-void ChapterTreeModel::loadFromOpusFile(const QString &pathToFile)
-{
-    OpusFileHandler ofh;
-    ofh.setFile(pathToFile);
-    ofh.importFromFile();
-    ChapterItem * created = ofh.createChapterTree();
-
-    if (created) {
-        appendRow(created);
-    }
-}
-
-void ChapterTreeModel::loadFromM4aFile(const QString &pathToFile)
-{
-    Mp4FileHandler mfh;
-    mfh.setFile(pathToFile);
-    mfh.importFromFile();
-    ChapterItem * created = mfh.createChapterTree();
-
-    if (created) {
-        appendRow(created);
-    }
-}
-
 bool ChapterTreeModel::saveToFile(const QString &pathToFile)
 {
     QMimeDatabase db;
     QMimeType mimeType = db.mimeTypeForFile(pathToFile);
-    if (mimeType.inherits("audio/mpeg")) {
-        return saveToMpegFile(pathToFile);
-    } else if (mimeType.inherits("audio/x-vorbis+ogg")) {
-        return saveToVorbisFile(pathToFile);
-    } else if (mimeType.inherits("audio/x-opus+ogg")) {
-        return saveToOpusFile(pathToFile);
-    } else if (mimeType.inherits("audio/mp4")) {
-#ifdef NO_LIBMP4V2
-        return false;
-#else
-        return saveToM4aFile(pathToFile);
-#endif // NO_LIBMP4V2
+
+    FileHandlerInterface * handler = FileHandlerManager::instance()->createHandlerByMimeType(mimeType);
+    if (handler) {
+        QStandardItem * item = invisibleRootItem()->child(0);
+        ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
+
+        handler->setFile(pathToFile);
+        handler->writeToFile(chapterItem);
+
+        return true;
     }
 
     return false;
-}
-
-bool ChapterTreeModel::saveToMpegFile(const QString &pathToFile)
-{
-    QStandardItem * item = invisibleRootItem()->child(0);
-    ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
-
-    MpegFileHandler mfh;
-    mfh.setFile(pathToFile);
-    mfh.writeToFile(chapterItem);
-
-    return true;
-}
-
-bool ChapterTreeModel::saveToVorbisFile(const QString &pathToFile)
-{
-    QStandardItem * item = invisibleRootItem()->child(0);
-    ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
-
-    VorbisFileHandler fh;
-    fh.setFile(pathToFile);
-    fh.writeToFile(chapterItem);
-
-    return true;
-}
-
-bool ChapterTreeModel::saveToOpusFile(const QString &pathToFile)
-{
-    QStandardItem * item = invisibleRootItem()->child(0);
-    ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
-
-    OpusFileHandler fh;
-    fh.setFile(pathToFile);
-    fh.writeToFile(chapterItem);
-
-    return true;
-}
-
-bool ChapterTreeModel::saveToM4aFile(const QString &pathToFile)
-{
-    QStandardItem * item = invisibleRootItem()->child(0);
-    ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
-
-    Mp4FileHandler mfh;
-    mfh.setFile(pathToFile);
-    mfh.writeToFile(chapterItem);
-
-    return true;
 }
 
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
