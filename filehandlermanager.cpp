@@ -49,7 +49,7 @@ FileHandlerInterface *FileHandlerManager::createHandlerByMimeType(const QMimeTyp
     } else if (mimeType.inherits("audio/x-opus+ogg")) {
         return new OpusFileHandler;
     } else if (mimeType.inherits("audio/mp4")) {
-        return new VorbisFileHandler;
+        return new Mp4FileHandler;
     }
 
     return nullptr;
