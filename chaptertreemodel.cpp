@@ -92,7 +92,8 @@ QModelIndex ChapterTreeModel::appendChapter(int startTimeMs, const QString &titl
 {
     QStandardItem * parentItem = invisibleRootItem()->child(0);
     if (!parentItem) {
-        ChapterItem * tocItem = m_manager.registerItem("presudoTOC");
+        ChapterItem * tocItem = new ChapterItem("presudoTOC");
+        tocItem->setColumnCount(3);
         tocItem->setItemProperty(FrameId, "CTOC");
         appendRow(tocItem);
         parentItem = tocItem;

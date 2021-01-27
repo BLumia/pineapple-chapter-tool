@@ -21,18 +21,3 @@ public:
 
     QVariant data(int role = Qt::UserRole + 1) const override;
 };
-
-class ChapterTreeManager
-{
-public:
-    ChapterTreeManager();
-    ~ChapterTreeManager();
-
-    ChapterItem * registerItem(const QString & elementId);
-    void setAudioLengthMs(int len);
-    int audioLengthMs() const;
-
-private:
-    QMap<QString, ChapterItem *> m_itemsMap; // <element id, item>
-    int m_audioLengthMs = 0;
-};

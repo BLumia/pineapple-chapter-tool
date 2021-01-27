@@ -3,7 +3,7 @@
 #include <QString>
 #include <QTime>
 
-#include "chaptertreemanager.h"
+#include "chapteritem.h"
 #include "xiphcomment.h"
 
 // spec: https://wiki.xiph.org/Chapter_Extension

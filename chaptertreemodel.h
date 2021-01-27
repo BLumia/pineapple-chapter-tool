@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chaptertreemanager.h"
+#include "chapteritem.h"
 
 #include <QStandardItemModel>
 
@@ -38,7 +38,4 @@ public:
 
 private:
     QModelIndex appendChapter(QStandardItem * parentItem, const QString & title, int startTimeMs, int rowAt = -1);
-
-private:
-    ChapterTreeManager m_manager;
 };

@@ -22,6 +22,14 @@ find_package(Mp4v2)
 
 pkg_check_modules(TagLib REQUIRED taglib)
 
+set (PCHAPTOOL_RC_FILES
+    # yeah, it's empty.
+)
+
+if (WIN32)
+    list(APPEND PCHAPTOOL_RC_FILES assets/pineapple-chapter-tool.rc)
+endif ()
+
 add_executable(${EXE_NAME}
     filehandlerinterface.h
     filehandlerinterface.cpp
@@ -40,8 +48,8 @@ add_executable(${EXE_NAME}
     filehandlermanager.cpp
 
     main.cpp
-    chaptertreemanager.cpp
-    chaptertreemanager.h
+    chapteritem.cpp
+    chapteritem.h
     chaptertreemodel.cpp
     chaptertreemodel.h
     chaptertreeview.cpp
@@ -49,7 +57,17 @@ add_executable(${EXE_NAME}
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+
+    ${PCHAPTOOL_RC_FILES}
 )
+
+# Extra build settings
+if (WIN32)
+    set_property (
+        TARGET ${EXE_NAME}
+        PROPERTY WIN32_EXECUTABLE true
+    )
+endif ()
 
 if (NOT Mp4v2_FOUND)
     message (WARNING "Mp4v2 not found!")
