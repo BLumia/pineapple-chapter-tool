@@ -12,6 +12,9 @@ class FileHandlerManagerPrivate
 {
 public:
     explicit FileHandlerManagerPrivate(FileHandlerManager *qq);
+    ~FileHandlerManagerPrivate();
+
+    QMap<QString, std::function<FileHandlerInterface*()>> m_handlerMap;
 
     FileHandlerManager *q_ptr;
 };
@@ -22,14 +25,33 @@ FileHandlerManagerPrivate::FileHandlerManagerPrivate(FileHandlerManager *qq)
 
 }
 
+FileHandlerManagerPrivate::~FileHandlerManagerPrivate()
+{
+
+}
+
 // ------------------------- Item Get Border Line -------------------------
 
-FileHandlerManager::FileHandlerManager(QObject *parent) : QObject(parent)
+FileHandlerManager::FileHandlerManager(QObject *parent)
+    : QObject(parent)
+    , d_ptr(new FileHandlerManagerPrivate(this))
 {
-    registerFileHandler<MpegFileHandler>(QStringLiteral("audio/mpeg"));
-    registerFileHandler<VorbisFileHandler>(QStringLiteral("audio/x-vorbis+ogg"));
-    registerFileHandler<OpusFileHandler>(QStringLiteral("audio/x-opus+ogg"));
-    registerFileHandler<Mp4FileHandler>(QStringLiteral("audio/mp4"));
+    registerFileHandler<MpegFileHandler>("audio/mpeg");
+    registerFileHandler<VorbisFileHandler>("audio/x-vorbis+ogg");
+    registerFileHandler<OpusFileHandler>("audio/x-opus+ogg");
+    registerFileHandler<Mp4FileHandler>("audio/mp4");
+}
+
+FileHandlerManager::~FileHandlerManager()
+{
+
+}
+
+void FileHandlerManager::insertFileHandler(const QString & mimeTypeStr, std::function<FileHandlerInterface *()> fn)
+{
+    Q_D(FileHandlerManager);
+
+    d->m_handlerMap[mimeTypeStr] = fn;
 }
 
 FileHandlerManager *FileHandlerManager::instance()
@@ -41,15 +63,12 @@ FileHandlerManager *FileHandlerManager::instance()
 
 FileHandlerInterface *FileHandlerManager::createHandlerByMimeType(const QMimeType &mimeType) const
 {
-    // TODO: should be replaced to actual factory logic here.
-    if (mimeType.inherits("audio/mpeg")) {
-        return new MpegFileHandler;
-    } else if (mimeType.inherits("audio/x-vorbis+ogg")) {
-        return new VorbisFileHandler;
-    } else if (mimeType.inherits("audio/x-opus+ogg")) {
-        return new OpusFileHandler;
-    } else if (mimeType.inherits("audio/mp4")) {
-        return new Mp4FileHandler;
+    Q_D(const FileHandlerManager);
+
+    for (const QString & mimeTypeStr : d->m_handlerMap.keys()) {
+        if (mimeType.inherits(mimeTypeStr)) {
+            return d->m_handlerMap[mimeTypeStr]();
+        }
     }
 
     return nullptr;

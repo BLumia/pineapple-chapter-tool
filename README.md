@@ -24,10 +24,13 @@ This tool can be used to add chapter information to audio files. MP3, OGG, and M
 | VLC (PC)         | Partial [^1] | Yes                 | Yes     |
 | PotPlayer        | Yes [^2]     | Yes                 | Yes     |
 | iTunes (Windows) | No           | No Playback Support | Yes[^3] |
+| Movist (macOS)   | Yes          | No Playback Support | Yes     |
+| MPC-HC           | Yes [^4]     | Yes                 | Yes     |
 
 [^1]: VLC 3.x doesn't support it at all, VLC 4.x doesn't display MP3 chapter markers on timeline, some of MP3 files are not recognized ([BUG](https://trac.videolan.org/vlc/ticket/7485)).
 [^2]: PotPlayer require MP3 file have at least one field not be empty in a general ID3v2 tag to display chapter frame correctly. 
 [^3]: iTunes (Windows) doesn't display M4A chapter markers on timeline.
+[^4]: The original MPC-HC is not, [this fork maintained by @clsid2](https://github.com/clsid2/mpc-hc) is supported.
 
 ## CLA
 
