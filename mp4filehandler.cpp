@@ -120,31 +120,17 @@ FileHandlerInterface::Status Mp4FileHandler::writeToFile(ChapterItem *chapterRoo
     // before we start, let's remove all existed chapters...
     MP4DeleteChapters(hM4a, MP4ChapterTypeAny);
 
-    ChapterItem * item = chapterRoot;
-    if (item && item->hasChildren()) {
-        // get ready to write our new chapter list.
-        ChapterItem * currentItem = static_cast<ChapterItem *>(item->child(0));
-        QStandardItemModel * currentModel = currentItem->model();
-        while (true) {
-            MP4Chapter_t chap;
+    ChapterItem::forEach(chapterRoot, [&](const ChapterItem * currentItem) {
+        MP4Chapter_t chap;
 
-            std::string chapterTitle(currentItem->data(ChapterTitle).toString().toStdString());
-            size_t titleLen = qMin(chapterTitle.length(), (size_t)MP4V2_CHAPTER_TITLE_MAX);
-            strncpy(chap.title, chapterTitle.c_str(), titleLen);
-            chap.title[titleLen] = 0;
-            chap.duration = currentItem->data(ChapterStartTimeMs).toUInt();
+        std::string chapterTitle(currentItem->data(ChapterTitle).toString().toStdString());
+        size_t titleLen = qMin(chapterTitle.length(), (size_t)MP4V2_CHAPTER_TITLE_MAX);
+        strncpy(chap.title, chapterTitle.c_str(), titleLen);
+        chap.title[titleLen] = 0;
+        chap.duration = currentItem->data(ChapterStartTimeMs).toUInt();
 
-            chapters.push_back(chap);
-
-            QModelIndex nextItemModel = currentModel->indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
-            if (nextItemModel.isValid()) {
-                QStandardItem * nextItem = currentModel->itemFromIndex(nextItemModel);
-                currentItem = static_cast<ChapterItem *>(nextItem);
-            } else {
-                break;
-            }
-        }
-    }
+        chapters.push_back(chap);
+    });
 
     bool isVideoTrack = false;
     MP4TrackId firstTrackId = getFirstAudioTrack(hM4a, isVideoTrack);

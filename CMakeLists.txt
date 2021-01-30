@@ -4,6 +4,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 project(pineapple-chapter-tool LANGUAGES CXX)
 
+include (GNUInstallDirs)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
@@ -61,14 +63,6 @@ add_executable(${EXE_NAME}
     ${PCHAPTOOL_RC_FILES}
 )
 
-# Extra build settings
-if (WIN32)
-    set_property (
-        TARGET ${EXE_NAME}
-        PROPERTY WIN32_EXECUTABLE true
-    )
-endif ()
-
 if (NOT Mp4v2_FOUND)
     message (WARNING "Mp4v2 not found!")
     target_compile_definitions(${EXE_NAME} PRIVATE
@@ -92,3 +86,59 @@ if (Mp4v2_FOUND)
         Mp4v2::Mp4v2
     )
 endif()
+
+# Extra build settings
+if (WIN32)
+    set_property (
+        TARGET ${EXE_NAME}
+        PROPERTY WIN32_EXECUTABLE true
+    )
+endif ()
+
+# Helper macros for install settings
+macro (pchaptool_convert_to_relative_path _var)
+    # Make sure _var is a relative path
+    if (IS_ABSOLUTE "${${_var}}")
+        file (RELATIVE_PATH ${_var} "${CMAKE_INSTALL_PREFIX}" "${${_var}}")
+    endif ()
+endmacro ()
+
+# Install settings
+if (WIN32)
+    # FIXME: try to avoid install to a "bin" subfolder under windows...
+    #        when fixed, don't forget to update the CI config file...
+    set (BIN_INSTALL_DIR "") # seems useless, don't know why...
+elseif (UNIX)
+    if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set(CMAKE_INSTALL_PREFIX /usr)
+    endif ()
+
+    set (BIN_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}") # relative, usually "bin"
+    pchaptool_convert_to_relative_path(BIN_INSTALL_DIR)
+    set (LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}") # "lib" or "lib64"
+    pchaptool_convert_to_relative_path(LIB_INSTALL_DIR)
+
+    # install icon
+    install (
+        FILES assets/icons/app-icon.svg
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/48x48/apps"
+        RENAME pineapple-chapter-tool.svg
+    )
+
+    # install shortcut
+    install (
+        FILES dist/net.blumia.pineapple-chapter-tool.desktop
+        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+    )
+endif()
+
+set (INSTALL_TARGETS_DEFAULT_ARGS
+    RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR} COMPONENT Devel
+)
+
+install (
+    TARGETS ${EXE_NAME}
+    ${INSTALL_TARGETS_DEFAULT_ARGS}
+)

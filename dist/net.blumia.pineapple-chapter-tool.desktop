@@ -1,0 +1,15 @@
+[Desktop Entry]
+Categories=Qt;AudioVideo;Audio;AudioVideoEditing;
+Comment=Pineapple Chapter Tool is a utility to add chapter markers to audio files
+Comment[zh_CN]=菠萝章节工具是一个用于给音频文件添加章节标记的实用程序
+Exec=pchaptool %F
+GenericName=Audio Chapter Marker Utility
+GenericName[zh_CN]=音频章节标记实用程序
+Icon=pineapple-chapter-tool
+Keywords=audio;id3v2;chapter;mp3;
+MimeType=audio/mpeg;audio/ogg;audio/x-vorbis+ogg;audio/mp4;
+Name=Pineapple Chapter Tool
+Name[zh_CN]=菠萝章节工具
+StartupNotify=false
+Type=Application
+Terminal=false
