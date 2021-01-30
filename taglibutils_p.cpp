@@ -72,37 +72,27 @@ bool TagLibUtils::saveToXiphComment(ChapterItem *rootItem, TagLib::Ogg::XiphComm
         xiphComment->removeFields(fieldName);
     }
 
-    ChapterItem * item = rootItem;
-    if (item && item->hasChildren()) {
-        // get ready to write our new chapter list.
-        ChapterItem * currentItem = static_cast<ChapterItem *>(item->child(0));
-        QStandardItemModel * currentModel = currentItem->model();
-        int currentChapterNumber = 1; // yeah it starts from 1.
-        while (true) {
-            // CHAPTER001=00:00:00.000
-            char chapterTime[11]; // CHAPTERXXX
-            snprintf(chapterTime, 11, "CHAPTER%03d", currentChapterNumber);
-            QTime startTime(QTime::fromMSecsSinceStartOfDay(currentItem->data(ChapterStartTimeMs).toInt()));
-            TagLib::String timeStr(startTime.toString("hh:mm:ss.zzz").toStdString(), TagLib::String::UTF8);
-            xiphComment->addField(chapterTime, timeStr);
+    int currentChapterNumber = 1; // yeah it starts from 1.
+    ChapterItem::forEach(rootItem, [&](const ChapterItem * currentItem) {
+        // XiphComment doesn't care about TOC item.
+        if (currentItem->hasChildren()) return;
 
-            if (currentItem->data(ChapterTitle).isValid()) {
-                char chapterName[15]; // CHAPTERXXXNAME
-                snprintf(chapterName, 15, "CHAPTER%03dNAME", currentChapterNumber);
-                TagLib::String titleStr(currentItem->data(ChapterTitle).toString().toStdString(), TagLib::String::UTF8);
-                xiphComment->addField(chapterName, titleStr);
-            }
+        // CHAPTER001=00:00:00.000
+        char chapterTime[11]; // CHAPTERXXX
+        snprintf(chapterTime, 11, "CHAPTER%03d", currentChapterNumber);
+        QTime startTime(QTime::fromMSecsSinceStartOfDay(currentItem->data(ChapterStartTimeMs).toInt()));
+        TagLib::String timeStr(startTime.toString("hh:mm:ss.zzz").toStdString(), TagLib::String::UTF8);
+        xiphComment->addField(chapterTime, timeStr);
 
-            currentChapterNumber++;
-            QModelIndex nextItemModel = currentModel->indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
-            if (nextItemModel.isValid()) {
-                QStandardItem * nextItem = currentModel->itemFromIndex(nextItemModel);
-                currentItem = static_cast<ChapterItem *>(nextItem);
-            } else {
-                break;
-            }
+        if (currentItem->data(ChapterTitle).isValid()) {
+            char chapterName[15]; // CHAPTERXXXNAME
+            snprintf(chapterName, 15, "CHAPTER%03dNAME", currentChapterNumber);
+            TagLib::String titleStr(currentItem->data(ChapterTitle).toString().toStdString(), TagLib::String::UTF8);
+            xiphComment->addField(chapterName, titleStr);
         }
-    }
+
+        currentChapterNumber++;
+    });
 
     return true;
 }

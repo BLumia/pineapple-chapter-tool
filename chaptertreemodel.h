@@ -17,16 +17,7 @@ public:
     using QStandardItemModel::QStandardItemModel;
 
     bool loadFromFile(const QString & pathToFile);
-    void loadFromMpegFile(const QString & pathToFile);
-    void loadFromVorbisFile(const QString & pathToFile);
-    void loadFromOpusFile(const QString & pathToFile);
-    void loadFromM4aFile(const QString & pathToFile);
-
     bool saveToFile(const QString & pathToFile);
-    bool saveToMpegFile(const QString & pathToFile);
-    bool saveToVorbisFile(const QString & pathToFile);
-    bool saveToOpusFile(const QString & pathToFile);
-    bool saveToM4aFile(const QString & pathToFile);
 
     bool clearChapterTreeButKeepTOC();
     QModelIndex appendChapter(const QModelIndexList &selectedIndexes);

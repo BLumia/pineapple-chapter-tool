@@ -20,4 +20,7 @@ public:
     void setItemProperty(enum ChapterProperties prop, const QVariant &value);
 
     QVariant data(int role = Qt::UserRole + 1) const override;
+
+    static void forEach(const ChapterItem * root,
+                        std::function<void(const ChapterItem *)> callback);
 };

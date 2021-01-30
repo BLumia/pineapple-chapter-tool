@@ -30,6 +30,7 @@ private slots:
     void on_removeBtn_clicked();
 
     void on_importBtn_clicked();
+    void on_exportBtn_clicked();
 
 private:
     void loadFile();

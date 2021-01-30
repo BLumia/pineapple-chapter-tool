@@ -201,3 +201,8 @@ void MainWindow::on_importBtn_clicked()
     }
     //
 }
+
+void MainWindow::on_exportBtn_clicked()
+{
+    // TODO: should at least support export to OGM style txt file.
+}

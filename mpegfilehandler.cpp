@@ -167,70 +167,53 @@ FileHandlerInterface::Status MpegFileHandler::writeToFile(ChapterItem *chapterRo
         id3v2Tag->setComment("Pineapple Chapter Tool :)");
     }
 
-    ChapterItem * currentItem = chapterRoot;
-    // if no item then no need to save chapters, if no children we are also no need
-    // to save a empty CTOC frame with no sub-chapters inside it.
-    if (currentItem && currentItem->hasChildren()) {
-        QStandardItemModel * currentModel = currentItem->model();
-        int nextCTOC = 0;
-        while (true) {
-            if (currentItem->hasChildren()) {
-                // It's a TOC item, create a CTOC frame and iterator all its children
-                char tocElementId[24];
-                snprintf(tocElementId, 24, "toc%d", nextCTOC);
-                int childrenCount = currentItem->rowCount();
-                TagLib::ByteVectorList elementIdList;
-                for (int i = 0; i < childrenCount; i++) {
-                    char chapterElementId[24];
-                    snprintf(chapterElementId, 24, "chp%d_%d", nextCTOC, i);
-                    elementIdList.append(chapterElementId);
-                }
-                ID3v2::TableOfContentsFrame * tocFrame = new ID3v2::TableOfContentsFrame(
-                    TagLib::ByteVector(tocElementId, strlen(tocElementId)),
-                    elementIdList
-                );
-                tocFrame->setIsTopLevel(nextCTOC == 0);
-                id3v2Tag->addFrame(tocFrame);
-
-                nextCTOC++;
-
-                QStandardItem * nextItem = currentItem->child(0);
-                currentItem = static_cast<ChapterItem *>(nextItem);
-            } else {
-                // It's a chapter item, create a CHAP frame, and move to next item
-                ID3v2::FrameList subFrameList;
+    int nextCTOC = 0;
+    ChapterItem::forEach(chapterRoot, [&](const ChapterItem* currentItem) {
+        if (currentItem->hasChildren()) {
+            // It's a TOC item, create a CTOC frame
+            char tocElementId[24];
+            snprintf(tocElementId, 24, "toc%d", nextCTOC);
+            int childrenCount = currentItem->rowCount();
+            TagLib::ByteVectorList elementIdList;
+            for (int i = 0; i < childrenCount; i++) {
                 char chapterElementId[24];
-                snprintf(chapterElementId, 24, "chp%d_%d", nextCTOC - 1, currentItem->row());
-
-                QString chapterTitle(currentItem->data(ChapterTitle).toString());
-                if (!chapterTitle.isEmpty()) {
-                    TagLib::String titleStr(chapterTitle.toStdString(), TagLib::String::UTF8);
-                    ID3v2::TextIdentificationFrame * chapterTitleFrane = new ID3v2::TextIdentificationFrame(
-                        "TIT2", TagLib::String::Latin1
-                    );
-                    chapterTitleFrane->setText(titleStr);
-                    subFrameList.append(chapterTitleFrane);
-                }
-
-                ID3v2::ChapterFrame * chapterFrame = new ID3v2::ChapterFrame(
-                    TagLib::ByteVector(chapterElementId, strlen(chapterElementId)),
-                    currentItem->data(ChapterStartTimeMs).toInt(),
-                    currentItem->data(ChapterEndTimeMs).toInt(),
-                    ~0u, ~0u,
-                    subFrameList
-                );
-                id3v2Tag->addFrame(chapterFrame);
-
-                QModelIndex nextItemModel = currentModel->indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
-                if (nextItemModel.isValid()) {
-                    QStandardItem * nextItem = currentModel->itemFromIndex(nextItemModel);
-                    currentItem = static_cast<ChapterItem *>(nextItem);
-                } else {
-                    break;
-                }
+                snprintf(chapterElementId, 24, "chp%d_%d", nextCTOC, i);
+                elementIdList.append(chapterElementId);
             }
+            ID3v2::TableOfContentsFrame * tocFrame = new ID3v2::TableOfContentsFrame(
+                TagLib::ByteVector(tocElementId, strlen(tocElementId)),
+                elementIdList
+            );
+            tocFrame->setIsTopLevel(nextCTOC == 0);
+            id3v2Tag->addFrame(tocFrame);
+
+            nextCTOC++;
+        } else {
+            // It's a chapter item, create a CHAP frame
+            ID3v2::FrameList subFrameList;
+            char chapterElementId[24];
+            snprintf(chapterElementId, 24, "chp%d_%d", nextCTOC - 1, currentItem->row());
+
+            QString chapterTitle(currentItem->data(ChapterTitle).toString());
+            if (!chapterTitle.isEmpty()) {
+                TagLib::String titleStr(chapterTitle.toStdString(), TagLib::String::UTF8);
+                ID3v2::TextIdentificationFrame * chapterTitleFrane = new ID3v2::TextIdentificationFrame(
+                    "TIT2", TagLib::String::Latin1
+                );
+                chapterTitleFrane->setText(titleStr);
+                subFrameList.append(chapterTitleFrane);
+            }
+
+            ID3v2::ChapterFrame * chapterFrame = new ID3v2::ChapterFrame(
+                TagLib::ByteVector(chapterElementId, strlen(chapterElementId)),
+                currentItem->data(ChapterStartTimeMs).toInt(),
+                currentItem->data(ChapterEndTimeMs).toInt(),
+                ~0u, ~0u,
+                subFrameList
+            );
+            id3v2Tag->addFrame(chapterFrame);
         }
-    }
+    });
 
     file.save();
 

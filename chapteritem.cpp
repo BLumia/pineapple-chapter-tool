@@ -20,3 +20,21 @@ QVariant ChapterItem::data(int role) const
 
     return QStandardItem::data(role);
 }
+
+// DFS iteration
+void ChapterItem::forEach(const ChapterItem *root,
+                          std::function<void (const ChapterItem *)> callback)
+{
+    if (!root) return;
+
+    callback(root);
+
+    if (root->hasChildren()) {
+        int childrenCount = root->rowCount();
+        for (int i = 0; i < childrenCount; i++) {
+            QStandardItem * nextItem = root->child(i);
+            ChapterItem * currentItem = static_cast<ChapterItem *>(nextItem);
+            ChapterItem::forEach(currentItem, callback);
+        }
+    }
+}
