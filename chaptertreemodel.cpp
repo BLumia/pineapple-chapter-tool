@@ -2,9 +2,12 @@
 
 #include "filehandlermanager.h"
 #include "filehandlerinterface.h"
+#include "taglibutils_p.h"
 
 #include <QDebug>
+#include <QItemSelectionModel>
 #include <QMimeDatabase>
+#include <QSaveFile>
 #include <QTime>
 
 bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
@@ -49,6 +52,44 @@ bool ChapterTreeModel::saveToFile(const QString &pathToFile)
     return false;
 }
 
+bool ChapterTreeModel::exportToFile(const QString &pathToFile)
+{
+    QSaveFile sf(pathToFile);
+    sf.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+
+    QStandardItem * item = invisibleRootItem()->child(0);
+    ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
+
+    if (chapterItem) {
+        int currentChapterNum = 1; // start from 1.
+        ChapterItem::forEach(chapterItem, [&](const ChapterItem * currentItem) {
+            if (currentItem->hasChildren()) return;
+
+            // write time and title
+            std::string timeStrLine = TagLibUtils::ogmChapterKey(currentChapterNum, TagLibUtils::OgmChapterTime);
+            timeStrLine += "=";
+            timeStrLine += TagLibUtils::ogmTimeStr(currentItem->data(ChapterStartTimeMs).toInt());
+            QByteArray ba;
+            ba.append(timeStrLine.data(), timeStrLine.length());
+            ba.append('\n');
+
+            std::string titleStrLine = TagLibUtils::ogmChapterKey(currentChapterNum, TagLibUtils::OgmChapterName);
+            titleStrLine += "=";
+            QByteArray ba2;
+            ba2.append(titleStrLine.data(), titleStrLine.length());
+            ba2.append(currentItem->data(ChapterTitle).toString().toUtf8());
+            ba2.append('\n');
+
+            sf.write(ba);
+            sf.write(ba2);
+
+            currentChapterNum++;
+        });
+    }
+
+    sf.commit();
+}
+
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
 {
     QStandardItem * parentItem = invisibleRootItem()->child(0);
@@ -62,25 +103,24 @@ bool ChapterTreeModel::clearChapterTreeButKeepTOC()
 }
 
 // actually only one item can be selected..
-QModelIndex ChapterTreeModel::appendChapter(const QModelIndexList &selectedIndexes)
+QModelIndex ChapterTreeModel::appendChapter(QItemSelectionModel * selectionModel)
 {
     QModelIndex parent;
     int row = -1;
     int startTimeMs = 0;
     QString chapterName(QStringLiteral("New Chapter"));
-    bool hasSelected = false;
+    ChapterItem * selectedChapter = nullptr;
 
-    if (!selectedIndexes.isEmpty()) {
+    if (selectionModel && !selectionModel->selectedIndexes().isEmpty()) {
+        QModelIndexList selectedIndexes(selectionModel->selectedIndexes());
         parent = selectedIndexes[0].parent();
         row = selectedIndexes[0].row();
-        hasSelected = true;
+        selectedChapter = static_cast<ChapterItem *>(itemFromIndex(selectedIndexes[0]));
     }
 
     QStandardItem * parentItem = parent.isValid() ? itemFromIndex(parent)
                                                   : invisibleRootItem()->child(0);
 
-    ChapterItem * selectedChapter = hasSelected ? static_cast<ChapterItem *>(itemFromIndex(selectedIndexes[0]))
-                                                : nullptr;
     if (selectedChapter) {
         startTimeMs = selectedChapter->data(ChapterStartTimeMs).toInt();
     }

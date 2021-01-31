@@ -145,8 +145,7 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionSave_triggered()
 {
-    QAbstractItemModel * currentModel = ui->treeView->model();
-    ChapterTreeModel * chapterModel = qobject_cast<ChapterTreeModel *>(currentModel);
+    ChapterTreeModel * chapterModel = ui->treeView->model();
     QFileInfo currentFile(m_filePath);
 
     if (!chapterModel) return;
@@ -173,16 +172,17 @@ void MainWindow::on_treeView_viewSelectionChanged()
 
 void MainWindow::on_appendChapterBtn_clicked()
 {
-    QModelIndexList selectedIndex(ui->treeView->selectionModel()->selectedIndexes());
-
-    ChapterTreeModel * model = qobject_cast<ChapterTreeModel *>(ui->treeView->model());
+    ChapterTreeModel * model = ui->treeView->model();
     if (model) {
-        model->appendChapter(selectedIndex);
+        model->appendChapter(ui->treeView->selectionModel());
     }
 }
 
 void MainWindow::on_removeBtn_clicked()
 {
+    QItemSelectionModel * selectionModel = ui->treeView->selectionModel();
+    if (!selectionModel) return;
+
     QModelIndexList selectedIndex(ui->treeView->selectionModel()->selectedIndexes());
     if (!selectedIndex.isEmpty()) {
         ui->treeView->model()->removeRow(selectedIndex[0].row(), selectedIndex[0].parent());
@@ -192,7 +192,7 @@ void MainWindow::on_removeBtn_clicked()
 
 void MainWindow::on_importBtn_clicked()
 {
-    ChapterTreeModel * model = qobject_cast<ChapterTreeModel *>(ui->treeView->model());
+    ChapterTreeModel * model = ui->treeView->model();
     if (model) {
         QString text = QInputDialog::getMultiLineText(this, tr("single line chapters"), tr("Sample:\n1:23:45 Chapter title"));
         if (!text.isEmpty()) {
@@ -204,5 +204,15 @@ void MainWindow::on_importBtn_clicked()
 
 void MainWindow::on_exportBtn_clicked()
 {
-    // TODO: should at least support export to OGM style txt file.
+    ChapterTreeModel * chapterModel = ui->treeView->model();
+    QFileInfo currentFile(m_filePath);
+
+    if (!chapterModel) return;
+    if (!currentFile.exists()) return;
+
+    QString filePath = QFileDialog::getSaveFileName(this, tr("Export Chapter Data to OGM Style TXT File"),
+                                                    currentFile.absolutePath(),
+                                                    tr("OGM Style TXT Files (*.ogm.txt)"));
+
+    chapterModel->exportToFile(filePath);
 }

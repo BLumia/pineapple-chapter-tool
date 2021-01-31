@@ -21,10 +21,15 @@ QVariant ChapterItem::data(int role) const
     return QStandardItem::data(role);
 }
 
-// DFS iteration
-void ChapterItem::forEach(const ChapterItem *root,
-                          std::function<void (const ChapterItem *)> callback)
-{
+template<
+    class Trait,
+    std::enable_if_t <
+        std::is_same<ChapterItem *, Trait>::value
+            || std::is_same<const ChapterItem *, Trait>::value,
+        bool
+    > = true
+>
+static void forEachTemplate(Trait root, std::function<void (Trait)> callback) {
     if (!root) return;
 
     callback(root);
@@ -34,7 +39,20 @@ void ChapterItem::forEach(const ChapterItem *root,
         for (int i = 0; i < childrenCount; i++) {
             QStandardItem * nextItem = root->child(i);
             ChapterItem * currentItem = static_cast<ChapterItem *>(nextItem);
-            ChapterItem::forEach(currentItem, callback);
+            forEachTemplate<Trait>(currentItem, callback);
         }
     }
+}
+
+// DFS iteration
+void ChapterItem::forEach(ChapterItem *root, std::function<void (ChapterItem *)> callback)
+{
+    forEachTemplate<ChapterItem *>(root, callback);
+}
+
+// DFS iteration
+void ChapterItem::forEach(const ChapterItem *root,
+                          std::function<void (const ChapterItem *)> callback)
+{
+    forEachTemplate<const ChapterItem *>(root, callback);
 }

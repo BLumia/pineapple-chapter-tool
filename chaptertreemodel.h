@@ -10,6 +10,10 @@ class XiphComment;
 }
 }
 
+QT_BEGIN_NAMESPACE
+class QItemSelectionModel;
+QT_END_NAMESPACE
+
 class ChapterTreeModel : public QStandardItemModel
 {
     Q_OBJECT
@@ -18,9 +22,10 @@ public:
 
     bool loadFromFile(const QString & pathToFile);
     bool saveToFile(const QString & pathToFile);
+    bool exportToFile(const QString & pathToFile);
 
     bool clearChapterTreeButKeepTOC();
-    QModelIndex appendChapter(const QModelIndexList &selectedIndexes);
+    QModelIndex appendChapter(QItemSelectionModel * selectionModel);
     QModelIndex appendChapter(int startTimeMs, const QString & title);
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;

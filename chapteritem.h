@@ -21,6 +21,8 @@ public:
 
     QVariant data(int role = Qt::UserRole + 1) const override;
 
+    static void forEach(ChapterItem * root,
+                        std::function<void(ChapterItem *)> callback);
     static void forEach(const ChapterItem * root,
                         std::function<void(const ChapterItem *)> callback);
 };

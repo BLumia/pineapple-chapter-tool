@@ -237,37 +237,24 @@ void MpegFileHandler::fillAllEndTimeMs(ChapterItem * chapterRoot)
 {
     if (!chapterRoot) return;
 
-    ChapterItem * currentItem = chapterRoot;
     ChapterItem * prevChapterItem = nullptr;
-    if (currentItem && currentItem->hasChildren()) {
-        QStandardItemModel * currentModel = currentItem->model();
-        while (true) {
-            if (currentItem->hasChildren()) {
-                // TOC item, just go to its child item.
-                QStandardItem * nextItem = currentItem->child(0);
-                currentItem = static_cast<ChapterItem *>(nextItem);
-            } else {
-                // It's a chapter item
-                // Check if we should fill the end time of previous chapter.
-                if (prevChapterItem && prevChapterItem->data(ChapterEndTimeMs).isNull()) {
-                    prevChapterItem->setItemProperty(ChapterEndTimeMs, currentItem->data(ChapterStartTimeMs));
-                }
-
-                prevChapterItem = currentItem;
-                QModelIndex nextItemModel = currentModel->indexFromItem(currentItem).siblingAtRow(currentItem->row() + 1);
-                if (nextItemModel.isValid()) {
-                    QStandardItem * nextItem = currentModel->itemFromIndex(nextItemModel);
-                    currentItem = static_cast<ChapterItem *>(nextItem);
-                } else {
-                    break;
-                }
+    ChapterItem::forEach(chapterRoot, [&](ChapterItem * currentItem) {
+        if (currentItem->hasChildren()) {
+            // TOC item, just skip to its child item, do nothing here.
+            return;
+        } else {
+            // It's a chapter item
+            // Check if we should fill the end time of previous chapter.
+            if (prevChapterItem && prevChapterItem->data(ChapterEndTimeMs).isNull()) {
+                prevChapterItem->setItemProperty(ChapterEndTimeMs, currentItem->data(ChapterStartTimeMs));
             }
+            prevChapterItem = currentItem;
         }
+    });
 
-        // last one.
-        if (prevChapterItem && prevChapterItem->data(ChapterEndTimeMs).isNull()) {
-            if (m_duration == 0) loadDuration();
-            prevChapterItem->setItemProperty(ChapterEndTimeMs, m_duration);
-        }
+    // last one.
+    if (prevChapterItem && prevChapterItem->data(ChapterEndTimeMs).isNull()) {
+        if (m_duration == 0) loadDuration();
+        prevChapterItem->setItemProperty(ChapterEndTimeMs, m_duration);
     }
 }

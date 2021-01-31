@@ -7,6 +7,29 @@
 #include "xiphcomment.h"
 
 // spec: https://wiki.xiph.org/Chapter_Extension
+std::string TagLibUtils::ogmChapterKey(int chapterNumber, OgmKeyType type)
+{
+    char chapterName[15] = {'\0'}; // CHAPTERXXXNAME
+    switch (type) {
+    case OgmChapterTime: // CHAPTER001=00:00:00.000
+        snprintf(chapterName, 11, "CHAPTER%03d", chapterNumber);
+        break;
+    case OgmChapterName: // CHAPTER001NAME=Chapter 1
+        snprintf(chapterName, 15, "CHAPTER%03dNAME", chapterNumber);
+        break;
+    default:
+        break;
+    }
+
+    return std::string(chapterName);
+}
+
+std::string TagLibUtils::ogmTimeStr(int ms)
+{
+    QTime startTime(QTime::fromMSecsSinceStartOfDay(ms));
+    return startTime.toString("hh:mm:ss.zzz").toStdString();
+}
+
 ChapterItem *TagLibUtils::loadFromXiphComment(TagLib::Ogg::XiphComment *tags)
 {
     constexpr int substrPos = sizeof("CHAPTERXXX") - 1;
@@ -78,17 +101,12 @@ bool TagLibUtils::saveToXiphComment(ChapterItem *rootItem, TagLib::Ogg::XiphComm
         if (currentItem->hasChildren()) return;
 
         // CHAPTER001=00:00:00.000
-        char chapterTime[11]; // CHAPTERXXX
-        snprintf(chapterTime, 11, "CHAPTER%03d", currentChapterNumber);
-        QTime startTime(QTime::fromMSecsSinceStartOfDay(currentItem->data(ChapterStartTimeMs).toInt()));
-        TagLib::String timeStr(startTime.toString("hh:mm:ss.zzz").toStdString(), TagLib::String::UTF8);
-        xiphComment->addField(chapterTime, timeStr);
+        TagLib::String timeStr(ogmTimeStr(currentItem->data(ChapterStartTimeMs).toInt()), TagLib::String::UTF8);
+        xiphComment->addField(ogmChapterKey(currentChapterNumber), timeStr);
 
         if (currentItem->data(ChapterTitle).isValid()) {
-            char chapterName[15]; // CHAPTERXXXNAME
-            snprintf(chapterName, 15, "CHAPTER%03dNAME", currentChapterNumber);
             TagLib::String titleStr(currentItem->data(ChapterTitle).toString().toStdString(), TagLib::String::UTF8);
-            xiphComment->addField(chapterName, titleStr);
+            xiphComment->addField(ogmChapterKey(currentChapterNumber, OgmChapterName), titleStr);
         }
 
         currentChapterNumber++;
