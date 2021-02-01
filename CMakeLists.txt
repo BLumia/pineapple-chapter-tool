@@ -45,6 +45,8 @@ add_executable(${EXE_NAME}
     opusfilehandler.cpp
     mp4filehandler.h
     mp4filehandler.cpp
+    cuefilehandler.h
+    cuefilehandler.cpp
 
     filehandlermanager.h
     filehandlermanager.cpp

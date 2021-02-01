@@ -87,7 +87,7 @@ bool ChapterTreeModel::exportToFile(const QString &pathToFile)
         });
     }
 
-    sf.commit();
+    return sf.commit();
 }
 
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
