@@ -109,13 +109,17 @@ QTime timeFromString(const QString & timeStr)
     }
 }
 
+// We use a very flexible rule similar to the one used on YouTube
+// https://support.google.com/youtube/answer/9884579
+// YouTube require the first chapter marker as 0:00, and a chapter line
+// must start with a chapter marker, we don't require this.
 void MainWindow::importFromLines(ChapterTreeModel * model, const QStringList &lines)
 {
     Q_CHECK_PTR(model);
 
     model->clearChapterTreeButKeepTOC();
     // This regex see: https://stackoverflow.com/questions/8318236/
-    QRegularExpression timeRegex(QStringLiteral(R"((?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d))"));
+    QRegularExpression timeRegex(QStringLiteral(R"((?:([01]?\d|2[0-3]):)?([0-5]?\d):([0-5]?\d))"));
     for (QString line : lines) {
         QRegularExpressionMatch match(timeRegex.match(line));
         qDebug() << match.capturedTexts() << match.hasMatch();
