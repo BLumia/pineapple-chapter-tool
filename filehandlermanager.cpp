@@ -5,6 +5,7 @@
 #include "opusfilehandler.h"
 #include "mp4filehandler.h"
 #include "cuefilehandler.h"
+#include "ytdlfilehandler.h"
 
 #include <QMultiMap>
 #include <QMultiHash>
@@ -42,6 +43,7 @@ FileHandlerManager::FileHandlerManager(QObject *parent)
     registerFileHandler<OpusFileHandler>("audio/x-opus+ogg");
     registerFileHandler<Mp4FileHandler>("audio/mp4");
     registerFileHandler<CueFileHandler>("application/x-cue");
+    registerFileHandler<YtdlFileHandler>("application/json");
 }
 
 FileHandlerManager::~FileHandlerManager()

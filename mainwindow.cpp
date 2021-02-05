@@ -156,8 +156,8 @@ void MainWindow::on_actionSave_triggered()
     if (!currentFile.exists()) return;
 
     QString filePath = QFileDialog::getSaveFileName(this, tr("Save Audio File with Chapters"),
-                                                    currentFile.absolutePath(),
-                                                    tr("Audio Files (*.mp3 *.ogg *.opus, *.m4a, *.cue)"));
+                                    currentFile.absolutePath(),
+                                    tr("Audio Files (*.mp3 *.ogg *.opus, *.m4a, *.cue, *.info.json)"));
 
     chapterModel->saveToFile(filePath);
 }

@@ -47,6 +47,8 @@ add_executable(${EXE_NAME}
     mp4filehandler.cpp
     cuefilehandler.h
     cuefilehandler.cpp
+    ytdlfilehandler.h
+    ytdlfilehandler.cpp
 
     filehandlermanager.h
     filehandlermanager.cpp
