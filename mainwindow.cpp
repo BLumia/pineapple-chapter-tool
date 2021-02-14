@@ -1,17 +1,13 @@
+/*
+    SPDX-FileCopyrightText: 2021 Gary Wang <wzc782970009@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-only
+*/
+
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
 #include "chaptertreemodel.h"
-
-//#include <fileref.h>
-#include <mpegfile.h>
-#include <id3v2tag.h>
-#include <chapterframe.h>
-#include <tbytevectorlist.h> // since tableofcontentsframe is missing the declaration of ByteVectorList...
-#include <tableofcontentsframe.h>
-#include <textidentificationframe.h>
-#include <urllinkframe.h>
-#include <attachedpictureframe.h>
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -26,19 +22,26 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_filePath(R"(C:\Users\Gary\Downloads\auphonic_chapters_demo.mp3)")
 {
     ui->setupUi(this);
 
     ui->actionOpen->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->actionSave->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogSaveButton));
-
-    loadFile();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::loadFile(QUrl url)
+{
+    QString filePath(url.toLocalFile());
+    if (QFile::exists(filePath)) {
+        m_filePath = filePath;
+    }
+
+    loadFile();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -61,8 +64,7 @@ void MainWindow::dropEvent(QDropEvent *event)
     if (mimeData->hasUrls()) {
         const QList<QUrl> &urls = mimeData->urls();
         if (!urls.isEmpty()) {
-            m_filePath = urls.first().toLocalFile();
-            loadFile();
+            loadFile(urls.first());
         }
     }
 }

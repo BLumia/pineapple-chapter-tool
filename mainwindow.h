@@ -1,5 +1,10 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+/*
+    SPDX-FileCopyrightText: 2021 Gary Wang <wzc782970009@gmail.com>
+
+    SPDX-License-Identifier: GPL-2.0-only
+*/
+
+#pragma once
 
 #include <QMainWindow>
 
@@ -15,6 +20,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    void loadFile(QUrl url);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
@@ -41,4 +48,3 @@ private:
 
     QString m_filePath;
 };
-#endif // MAINWINDOW_H
