@@ -53,3 +53,9 @@ FileHandlerInterface::Status VorbisFileHandler::writeToFile(ChapterItem *chapter
 
     return file.save() ? SUCCESS : FILE_STAT_ERROR;
 }
+
+
+FileHandlerInterface::Status VorbisFileHandler::exportToFile(ChapterItem *)
+{
+    return EXPORT_NOT_SUPPORTED;
+}

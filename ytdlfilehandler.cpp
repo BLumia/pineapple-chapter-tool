@@ -107,3 +107,8 @@ FileHandlerInterface::Status YtdlFileHandler::writeToFile(ChapterItem *chapterRo
 
     return SUCCESS;
 }
+
+FileHandlerInterface::Status YtdlFileHandler::exportToFile(ChapterItem *chapterRoot)
+{
+    return writeToFile(chapterRoot);
+}

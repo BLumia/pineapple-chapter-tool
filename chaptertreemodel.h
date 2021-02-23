@@ -22,7 +22,7 @@ public:
 
     bool loadFromFile(const QString & pathToFile);
     bool saveToFile(const QString & pathToFile);
-    bool exportToFile(const QString & pathToFile);
+    bool exportToFile(const QString & pathToFile, const QString &suffix);
 
     bool clearChapterTreeButKeepTOC();
     QModelIndex appendChapter(QItemSelectionModel * selectionModel);

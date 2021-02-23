@@ -8,6 +8,8 @@
 #include "./ui_mainwindow.h"
 
 #include "chaptertreemodel.h"
+#include "filehandlermanager.h"
+#include "filehandlerinterface.h"
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -212,13 +214,29 @@ void MainWindow::on_exportBtn_clicked()
 {
     ChapterTreeModel * chapterModel = ui->treeView->model();
     QFileInfo currentFile(m_filePath);
+    QString defaultSavePath;
+    QStringList filters; // Copywritings
+    QMap<QString, QString> filterExporterMap; // <Filter Copywriting, Suffix>
+
+    QList<QPair<QString, QString> > exporters = FileHandlerManager::instance()->exporterList();
+    for (const QPair<QString, QString> & exporter : exporters) {
+        filterExporterMap[exporter.second] = exporter.first;
+        filters.append(exporter.second);
+    }
 
     if (!chapterModel) return;
-    if (!currentFile.exists()) return;
+    defaultSavePath = currentFile.exists() ? currentFile.absolutePath() : QDir::homePath();
 
-    QString filePath = QFileDialog::getSaveFileName(this, tr("Export Chapter Data to OGM Style TXT File"),
-                                                    currentFile.absolutePath(),
-                                                    tr("OGM Style TXT Files (*.ogm.txt)"));
-
-    chapterModel->exportToFile(filePath);
+    const QStringList schemes = QStringList(QStringLiteral("file"));
+    QFileDialog dlg(this, tr("Export Chapter Data to File"), defaultSavePath,
+                    filters.join(QLatin1String(";;")));
+    dlg.setSupportedSchemes(schemes);
+    dlg.setAcceptMode(QFileDialog::AcceptSave);
+    if (dlg.exec() == QDialog::Accepted) {
+        QString selectedFilter = dlg.selectedNameFilter();
+        if (filterExporterMap.contains(selectedFilter)) {
+            QString filePath(dlg.selectedUrls().value(0).toLocalFile());
+            chapterModel->exportToFile(filePath, filterExporterMap[selectedFilter]);
+        }
+    }
 }

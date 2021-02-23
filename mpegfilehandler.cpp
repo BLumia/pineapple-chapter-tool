@@ -220,6 +220,11 @@ FileHandlerInterface::Status MpegFileHandler::writeToFile(ChapterItem *chapterRo
     return SUCCESS;
 }
 
+FileHandlerInterface::Status MpegFileHandler::exportToFile(ChapterItem *)
+{
+    return EXPORT_NOT_SUPPORTED;
+}
+
 bool MpegFileHandler::loadDuration()
 {
     TagLib::FileRef fileRef(m_file.toLocal8Bit().data());

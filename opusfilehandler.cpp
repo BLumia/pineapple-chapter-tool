@@ -2,6 +2,7 @@
 
 #include "taglibutils_p.h"
 
+#include <QSaveFile>
 #include <opusfile.h>
 
 OpusFileHandler::OpusFileHandler()
@@ -52,4 +53,42 @@ FileHandlerInterface::Status OpusFileHandler::writeToFile(ChapterItem *chapterRo
     TagLibUtils::saveToXiphComment(chapterRoot, tags);
 
     return file.save() ? SUCCESS : FILE_STAT_ERROR;
+}
+
+FileHandlerInterface::Status OpusFileHandler::exportToFile(ChapterItem *chapterRoot)
+{
+    QSaveFile sf(m_file);
+    sf.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+
+    QStandardItem * item = chapterRoot;
+    ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
+
+    if (chapterItem) {
+        int currentChapterNum = 1; // start from 1.
+        ChapterItem::forEach(chapterItem, [&](const ChapterItem * currentItem) {
+            if (currentItem->hasChildren()) return;
+
+            // write time and title
+            std::string timeStrLine = TagLibUtils::ogmChapterKey(currentChapterNum, TagLibUtils::OgmChapterTime);
+            timeStrLine += "=";
+            timeStrLine += TagLibUtils::ogmTimeStr(currentItem->data(ChapterStartTimeMs).toInt());
+            QByteArray ba;
+            ba.append(timeStrLine.data(), timeStrLine.length());
+            ba.append('\n');
+
+            std::string titleStrLine = TagLibUtils::ogmChapterKey(currentChapterNum, TagLibUtils::OgmChapterName);
+            titleStrLine += "=";
+            QByteArray ba2;
+            ba2.append(titleStrLine.data(), titleStrLine.length());
+            ba2.append(currentItem->data(ChapterTitle).toString().toUtf8());
+            ba2.append('\n');
+
+            sf.write(ba);
+            sf.write(ba2);
+
+            currentChapterNum++;
+        });
+    }
+
+    return sf.commit() ? SUCCESS : FILE_STAT_ERROR;
 }

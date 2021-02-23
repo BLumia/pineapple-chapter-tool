@@ -150,3 +150,8 @@ FileHandlerInterface::Status CueFileHandler::writeToFile(ChapterItem *chapterRoo
 
     return SUCCESS;
 }
+
+FileHandlerInterface::Status CueFileHandler::exportToFile(ChapterItem *chapterRoot)
+{
+    return writeToFile(chapterRoot);
+}

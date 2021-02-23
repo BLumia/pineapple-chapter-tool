@@ -17,7 +17,7 @@ bool ChapterTreeModel::loadFromFile(const QString &pathToFile)
     QMimeDatabase db;
     QMimeType mimeType = db.mimeTypeForFile(pathToFile);
 
-    FileHandlerInterface * handler = FileHandlerManager::instance()->createHandlerByMimeType(mimeType);
+    FileHandlerInterface * handler = FileHandlerManager::instance()->createReadHandlerByMimeType(mimeType);
     if (handler) {
         handler->setFile(pathToFile);
         handler->importFromFile();
@@ -38,7 +38,7 @@ bool ChapterTreeModel::saveToFile(const QString &pathToFile)
     QMimeDatabase db;
     QMimeType mimeType = db.mimeTypeForFile(pathToFile);
 
-    FileHandlerInterface * handler = FileHandlerManager::instance()->createHandlerByMimeType(mimeType);
+    FileHandlerInterface * handler = FileHandlerManager::instance()->createWriteHandlerByMimeType(mimeType);
     if (handler) {
         QStandardItem * item = invisibleRootItem()->child(0);
         ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
@@ -52,42 +52,14 @@ bool ChapterTreeModel::saveToFile(const QString &pathToFile)
     return false;
 }
 
-bool ChapterTreeModel::exportToFile(const QString &pathToFile)
+bool ChapterTreeModel::exportToFile(const QString &pathToFile, const QString & suffix)
 {
-    QSaveFile sf(pathToFile);
-    sf.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-
     QStandardItem * item = invisibleRootItem()->child(0);
     ChapterItem * chapterItem = static_cast<ChapterItem *>(item);
 
-    if (chapterItem) {
-        int currentChapterNum = 1; // start from 1.
-        ChapterItem::forEach(chapterItem, [&](const ChapterItem * currentItem) {
-            if (currentItem->hasChildren()) return;
-
-            // write time and title
-            std::string timeStrLine = TagLibUtils::ogmChapterKey(currentChapterNum, TagLibUtils::OgmChapterTime);
-            timeStrLine += "=";
-            timeStrLine += TagLibUtils::ogmTimeStr(currentItem->data(ChapterStartTimeMs).toInt());
-            QByteArray ba;
-            ba.append(timeStrLine.data(), timeStrLine.length());
-            ba.append('\n');
-
-            std::string titleStrLine = TagLibUtils::ogmChapterKey(currentChapterNum, TagLibUtils::OgmChapterName);
-            titleStrLine += "=";
-            QByteArray ba2;
-            ba2.append(titleStrLine.data(), titleStrLine.length());
-            ba2.append(currentItem->data(ChapterTitle).toString().toUtf8());
-            ba2.append('\n');
-
-            sf.write(ba);
-            sf.write(ba2);
-
-            currentChapterNum++;
-        });
-    }
-
-    return sf.commit();
+    FileHandlerInterface * handler = FileHandlerManager::instance()->createExportHandlerBySuffix(suffix);
+    handler->setFile(pathToFile);
+    handler->exportToFile(chapterItem);
 }
 
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()

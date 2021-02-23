@@ -19,6 +19,7 @@ public:
         NO_FILE_LOADED, // forget to call setFile()
         FILE_STAT_ERROR, // any error during file loading.
         IMPORT_NOT_SUPPORTED,
+        WRITE_NOT_SUPPORTED,
         EXPORT_NOT_SUPPORTED,
         DURATION_REQUIRED, // need to set duration manually.
     };
@@ -30,4 +31,5 @@ public:
     // it is possible that the handler modified the chapter tree.
     // Or maybe we need a pre-write check interface?
     virtual enum Status writeToFile(ChapterItem * chapterRoot) = 0;
+    virtual enum Status exportToFile(ChapterItem * chapterRoot) = 0;
 };
