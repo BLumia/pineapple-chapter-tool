@@ -60,6 +60,8 @@ bool ChapterTreeModel::exportToFile(const QString &pathToFile, const QString & s
     FileHandlerInterface * handler = FileHandlerManager::instance()->createExportHandlerBySuffix(suffix);
     handler->setFile(pathToFile);
     handler->exportToFile(chapterItem);
+
+    return true;
 }
 
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
