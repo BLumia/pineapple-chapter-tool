@@ -16,6 +16,10 @@
   <property name="windowTitle">
    <string>Pineapple Chapter Tool</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="assets/resources.qrc">
+    <normaloff>:/icons/app-icon.svg</normaloff>:/icons/app-icon.svg</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -50,13 +54,6 @@
          <widget class="QPushButton" name="importBtn">
           <property name="text">
            <string>Import</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="exportBtn">
-          <property name="text">
-           <string>Export</string>
           </property>
          </widget>
         </item>
@@ -110,14 +107,19 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen"/>
-   <addaction name="actionSave"/>
+   <addaction name="actionApply"/>
+   <addaction name="actionExport"/>
   </widget>
-  <action name="actionSave">
+  <action name="actionApply">
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="assets/resources.qrc">
+     <normaloff>:/icons/actions/document-apply-to-audio.png</normaloff>:/icons/actions/document-apply-to-audio.png</iconset>
+   </property>
    <property name="text">
-    <string>Save</string>
+    <string>Apply</string>
    </property>
    <property name="toolTip">
     <string>Save to file</string>
@@ -127,6 +129,10 @@
    </property>
   </action>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="assets/resources.qrc">
+     <normaloff>:/icons/actions/document-open-music.png</normaloff>:/icons/actions/document-open-music.png</iconset>
+   </property>
    <property name="text">
     <string>Open</string>
    </property>
@@ -137,6 +143,15 @@
     <string>Ctrl+O</string>
    </property>
   </action>
+  <action name="actionExport">
+   <property name="icon">
+    <iconset resource="assets/resources.qrc">
+     <normaloff>:/icons/actions/document-export.png</normaloff>:/icons/actions/document-export.png</iconset>
+   </property>
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -145,6 +160,8 @@
    <header>chaptertreeview.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="assets/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -24,6 +24,12 @@ find_package(Mp4v2)
 
 pkg_check_modules(TagLib REQUIRED taglib)
 
+set (CMAKE_AUTORCC ON)
+
+set (PCHAPTOOL_QRC_FILES
+    assets/resources.qrc
+)
+
 set (PCHAPTOOL_RC_FILES
     # yeah, it's empty.
 )
@@ -64,6 +70,7 @@ add_executable(${EXE_NAME}
     mainwindow.h
     mainwindow.ui
 
+    ${PCHAPTOOL_QRC_FILES}
     ${PCHAPTOOL_RC_FILES}
 )
 

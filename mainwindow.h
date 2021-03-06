@@ -29,7 +29,8 @@ protected:
 
 private slots:
     void on_actionOpen_triggered();
-    void on_actionSave_triggered();
+    void on_actionApply_triggered();
+    void on_actionExport_triggered();
 
     void on_treeView_viewSelectionChanged();
 
@@ -37,7 +38,6 @@ private slots:
     void on_removeBtn_clicked();
 
     void on_importBtn_clicked();
-    void on_exportBtn_clicked();
 
 private:
     void loadFile();

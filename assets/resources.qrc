@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/actions/document-apply-to-audio.png</file>
+        <file>icons/actions/document-export.png</file>
+        <file>icons/actions/document-import.png</file>
+        <file>icons/app-icon.svg</file>
+        <file>icons/actions/document-open-music.png</file>
+    </qresource>
+</RCC>

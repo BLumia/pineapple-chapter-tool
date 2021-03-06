@@ -27,8 +27,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->actionOpen->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogOpenButton));
-    ui->actionSave->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogSaveButton));
+    // Due to we have action that doesn't really match to a freedesktop icon theme
+    // action type, using theme icon will cause style doesn't match. Before we figure
+    // out some better solution, we use action icons inside the resource file...
+//    ui->actionOpen->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogOpenButton));
+//    ui->actionSave->setIcon(qApp->style()->standardIcon(QStyle::SP_DialogSaveButton));
 }
 
 MainWindow::~MainWindow()
@@ -92,7 +95,7 @@ void MainWindow::loadFile()
         QFileInfo fileInfo(m_filePath);
         setWindowTitle(fileInfo.fileName());
 
-        ui->actionSave->setEnabled(true);
+        ui->actionApply->setEnabled(true);
     } else {
         QMessageBox::information(
                     this, tr("Load failed"),
@@ -151,7 +154,7 @@ void MainWindow::on_actionOpen_triggered()
 }
 
 
-void MainWindow::on_actionSave_triggered()
+void MainWindow::on_actionApply_triggered()
 {
     ChapterTreeModel * chapterModel = ui->treeView->model();
     QFileInfo currentFile(m_filePath);
@@ -164,6 +167,37 @@ void MainWindow::on_actionSave_triggered()
                                     tr("Audio Files (*.mp3 *.ogg *.opus, *.m4a, *.cue, *.info.json)"));
 
     chapterModel->saveToFile(filePath);
+}
+
+void MainWindow::on_actionExport_triggered()
+{
+    ChapterTreeModel * chapterModel = ui->treeView->model();
+    QFileInfo currentFile(m_filePath);
+    QString defaultSavePath;
+    QStringList filters; // Copywritings
+    QMap<QString, QString> filterExporterMap; // <Filter Copywriting, Suffix>
+
+    QList<QPair<QString, QString> > exporters = FileHandlerManager::instance()->exporterList();
+    for (const QPair<QString, QString> & exporter : qAsConst(exporters)) {
+        filterExporterMap[exporter.second] = exporter.first;
+        filters.append(exporter.second);
+    }
+
+    if (!chapterModel) return;
+    defaultSavePath = currentFile.exists() ? currentFile.absolutePath() : QDir::homePath();
+
+    const QStringList schemes = QStringList(QStringLiteral("file"));
+    QFileDialog dlg(this, tr("Export Chapter Data to File"), defaultSavePath,
+                    filters.join(QLatin1String(";;")));
+    dlg.setSupportedSchemes(schemes);
+    dlg.setAcceptMode(QFileDialog::AcceptSave);
+    if (dlg.exec() == QDialog::Accepted) {
+        QString selectedFilter = dlg.selectedNameFilter();
+        if (filterExporterMap.contains(selectedFilter)) {
+            QString filePath(dlg.selectedUrls().value(0).toLocalFile());
+            chapterModel->exportToFile(filePath, filterExporterMap[selectedFilter]);
+        }
+    }
 }
 
 void MainWindow::on_treeView_viewSelectionChanged()
@@ -210,33 +244,3 @@ void MainWindow::on_importBtn_clicked()
     //
 }
 
-void MainWindow::on_exportBtn_clicked()
-{
-    ChapterTreeModel * chapterModel = ui->treeView->model();
-    QFileInfo currentFile(m_filePath);
-    QString defaultSavePath;
-    QStringList filters; // Copywritings
-    QMap<QString, QString> filterExporterMap; // <Filter Copywriting, Suffix>
-
-    QList<QPair<QString, QString> > exporters = FileHandlerManager::instance()->exporterList();
-    for (const QPair<QString, QString> & exporter : qAsConst(exporters)) {
-        filterExporterMap[exporter.second] = exporter.first;
-        filters.append(exporter.second);
-    }
-
-    if (!chapterModel) return;
-    defaultSavePath = currentFile.exists() ? currentFile.absolutePath() : QDir::homePath();
-
-    const QStringList schemes = QStringList(QStringLiteral("file"));
-    QFileDialog dlg(this, tr("Export Chapter Data to File"), defaultSavePath,
-                    filters.join(QLatin1String(";;")));
-    dlg.setSupportedSchemes(schemes);
-    dlg.setAcceptMode(QFileDialog::AcceptSave);
-    if (dlg.exec() == QDialog::Accepted) {
-        QString selectedFilter = dlg.selectedNameFilter();
-        if (filterExporterMap.contains(selectedFilter)) {
-            QString filePath(dlg.selectedUrls().value(0).toLocalFile());
-            chapterModel->exportToFile(filePath, filterExporterMap[selectedFilter]);
-        }
-    }
-}
