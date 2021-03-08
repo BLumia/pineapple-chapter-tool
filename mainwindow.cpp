@@ -10,6 +10,7 @@
 #include "chaptertreemodel.h"
 #include "filehandlermanager.h"
 #include "filehandlerinterface.h"
+#include "chapterinfowidget.h"
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -207,6 +208,7 @@ void MainWindow::on_treeView_viewSelectionChanged()
     QModelIndexList selectedIndex(ui->treeView->selectionModel()->selectedIndexes());
     if (!selectedIndex.isEmpty()) {
         canDelete = true;
+        ui->chapterInfoWidget->setCurrentChapter(ui->treeView->model(), selectedIndex.first());
     }
 
     ui->removeBtn->setEnabled(canDelete);
@@ -236,7 +238,7 @@ void MainWindow::on_importBtn_clicked()
 {
     ChapterTreeModel * model = ui->treeView->model();
     if (model) {
-        QString text = QInputDialog::getMultiLineText(this, tr("single line chapters"), tr("Sample:\n1:23:45 Chapter title"));
+        QString text = QInputDialog::getMultiLineText(this, tr("Single line chapters"), tr("Sample:\n1:23   Chapter 1 title\n1:23:45 Chapter 2 title"));
         if (!text.isEmpty()) {
             importFromLines(model, text.split('\n'));
         }

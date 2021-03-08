@@ -70,6 +70,10 @@ add_executable(${EXE_NAME}
     mainwindow.h
     mainwindow.ui
 
+    chapterinfowidget.cpp
+    chapterinfowidget.h
+    chapterinfowidget.ui
+
     ${PCHAPTOOL_QRC_FILES}
     ${PCHAPTOOL_RC_FILES}
 )
