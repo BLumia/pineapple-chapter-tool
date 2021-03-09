@@ -209,6 +209,9 @@ void MainWindow::on_treeView_viewSelectionChanged()
     if (!selectedIndex.isEmpty()) {
         canDelete = true;
         ui->chapterInfoWidget->setCurrentChapter(ui->treeView->model(), selectedIndex.first());
+        ui->chapterInfoWidget->setVisible(true);
+    } else {
+        ui->chapterInfoWidget->setVisible(false);
     }
 
     ui->removeBtn->setEnabled(canDelete);

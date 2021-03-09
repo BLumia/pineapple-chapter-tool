@@ -57,6 +57,7 @@ FileHandlerManager::FileHandlerManager(QObject *parent)
     registerMimeTypeHandler<YtdlFileHandler>("application/json", true, false);
 
     registerExporter<OpusFileHandler>("*.ogm.txt", tr("OGM Style TXT Files"));
+    registerExporter<CueFileHandler>("*.cue", tr("CUE Files"));
     registerExporter<YtdlFileHandler>("*.info.json", tr("youtube-dl Style Json Files"));
 }
 
