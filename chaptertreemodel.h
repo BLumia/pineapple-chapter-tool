@@ -24,6 +24,7 @@ public:
     bool saveToFile(const QString & pathToFile);
     bool exportToFile(const QString & pathToFile, const QString &suffix);
 
+    void ensureHaveTOC();
     bool clearChapterTreeButKeepTOC();
     QModelIndex appendChapter(QItemSelectionModel * selectionModel);
     QModelIndex appendChapter(int startTimeMs, const QString & title);

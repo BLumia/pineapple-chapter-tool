@@ -64,6 +64,17 @@ bool ChapterTreeModel::exportToFile(const QString &pathToFile, const QString & s
     return true;
 }
 
+void ChapterTreeModel::ensureHaveTOC()
+{
+    QStandardItem * parentItem = invisibleRootItem()->child(0);
+    if (!parentItem) {
+        ChapterItem * tocItem = new ChapterItem("presudoTOC");
+        tocItem->setColumnCount(3);
+        tocItem->setItemProperty(FrameId, "CTOC");
+        appendRow(tocItem);
+    }
+}
+
 bool ChapterTreeModel::clearChapterTreeButKeepTOC()
 {
     QStandardItem * parentItem = invisibleRootItem()->child(0);
@@ -79,6 +90,8 @@ bool ChapterTreeModel::clearChapterTreeButKeepTOC()
 // actually only one item can be selected..
 QModelIndex ChapterTreeModel::appendChapter(QItemSelectionModel * selectionModel)
 {
+    ensureHaveTOC();
+
     QModelIndex parent;
     int row = -1;
     int startTimeMs = 0;
@@ -169,6 +182,8 @@ int ChapterTreeModel::columnCount(const QModelIndex &parent) const
 
 QModelIndex ChapterTreeModel::appendChapter(QStandardItem *parentItem, const QString &title, int startTimeMs, int rowAt)
 {
+    Q_CHECK_PTR(parentItem);
+
     ChapterItem * newChapter = new ChapterItem();
     newChapter->setColumnCount(3);
     newChapter->setItemProperty(FrameId, "CHAP");

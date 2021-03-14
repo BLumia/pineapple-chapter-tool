@@ -43,6 +43,8 @@ private:
     void loadFile();
     void importFromLines(ChapterTreeModel *model, const QStringList &lines);
 
+    void uiAdjustHeaderSelectionResizeMode();
+
 private:
     Ui::MainWindow *ui;
 

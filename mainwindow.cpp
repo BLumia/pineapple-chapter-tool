@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->chapterInfoWidget->setVisible(false);
     // Due to we have action that doesn't really match to a freedesktop icon theme
     // action type, using theme icon will cause style doesn't match. Before we figure
     // out some better solution, we use action icons inside the resource file...
@@ -87,7 +88,7 @@ void MainWindow::loadFile()
 
         ui->treeView->setModel(model);
         ui->treeView->expandAll();
-        ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+        uiAdjustHeaderSelectionResizeMode();
 
         if (oldModel) {
             delete oldModel;
@@ -125,6 +126,8 @@ void MainWindow::importFromLines(ChapterTreeModel * model, const QStringList &li
 {
     Q_CHECK_PTR(model);
 
+    bool hasValidLine = false;
+
     model->clearChapterTreeButKeepTOC();
     // This regex see: https://stackoverflow.com/questions/8318236/
     QRegularExpression timeRegex(QStringLiteral(R"((?:([01]?\d|2[0-3]):)?([0-5]?\d):([0-5]?\d))"));
@@ -138,8 +141,21 @@ void MainWindow::importFromLines(ChapterTreeModel * model, const QStringList &li
             QTime startTime(timeFromString(timeStr));
             qDebug() << startTime << startTime.msecsSinceStartOfDay();
             model->appendChapter(startTime.msecsSinceStartOfDay(), line);
+            hasValidLine = true;
         }
     }
+
+    if (hasValidLine) {
+        uiAdjustHeaderSelectionResizeMode();
+    }
+}
+
+void MainWindow::uiAdjustHeaderSelectionResizeMode()
+{
+    ui->treeView->expandAll();
+    ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->treeView->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->treeView->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -222,6 +238,7 @@ void MainWindow::on_appendChapterBtn_clicked()
     ChapterTreeModel * model = ui->treeView->model();
     if (model) {
         model->appendChapter(ui->treeView->selectionModel());
+        uiAdjustHeaderSelectionResizeMode();
     }
 }
 
