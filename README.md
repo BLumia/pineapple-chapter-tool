@@ -8,7 +8,7 @@ Some people may have a collection of concert music files or audiobooks, which ma
 
 This tool can be used to add chapter information to audio files. MP3, OGG, and M4A formats are supported. Once the chapter data added to the audio file, you can then use them in audio players [1] and get the benefit of these chapter data.
 
-[1]: Currently, seems only [mpv](https://mpv.io/) support all these formats mentioned above. [VLC](https://www.videolan.org/vlc/index.html) have [partial support of MP3(ID3v2) chapter frame](https://trac.videolan.org/vlc/ticket/7485) and I have plan to implement a fix and ensure it's upstreamable. My own music player will also plan to support chapter data in all mentioned formats.
+[1]: Currently, seems only [mpv](https://mpv.io/) support all these formats mentioned above. ~~[VLC](https://www.videolan.org/vlc/index.html) have [partial support of MP3(ID3v2) chapter frame](https://code.videolan.org/videolan/vlc/-/issues/7485) and I have plan to implement a fix and ensure it's upstreamable (edit: upstream merged my patch and now it's fixed)~~ VLC 4.x development branch now have basic support of MP3(ID3v2) chapter markers. My own music player will also plan to support chapter data in all mentioned formats.
 
 This tool can also be used to export existing chapter markers inside an audio file to some other common-used formats to work with other applications, currently supported formats are: `.cue`, `.ogm.txt` (OGG music metadata format plain text), `.ytdl.json` (json with the same struct as the one saved by youtube-dl)
 
@@ -29,7 +29,7 @@ This tool can also be used to export existing chapter markers inside an audio fi
 | Movist (macOS)   | Yes          | No Playback Support | Yes     |
 | MPC-HC           | Yes [5]      | Yes                 | Yes     |
 
-[2]: VLC 3.x doesn't support it at all, VLC 4.x doesn't display MP3 chapter markers on timeline, some of MP3 files are not recognized ([BUG](https://trac.videolan.org/vlc/ticket/7485)).
+[2]: VLC 3.x doesn't support it at all, VLC 4.x doesn't display MP3 chapter markers on timeline, but seems should be fixed before the initial VLC 4.x stable version release.
 
 [3]: PotPlayer require MP3 file have at least one field not be empty in a general ID3v2 tag to display chapter frame correctly.
 
