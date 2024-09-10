@@ -1,5 +1,7 @@
 #include "mpegfilehandler.h"
 
+#include <iostream>
+
 #include <fileref.h>
 
 #include <mpegfile.h>
