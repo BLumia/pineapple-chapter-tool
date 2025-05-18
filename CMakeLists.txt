@@ -17,12 +17,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set (EXE_NAME pchaptool)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
+find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
-find_package(PkgConfig REQUIRED)
+find_package(TagLib 2.0.0)
 find_package(Mp4v2)
-
-pkg_check_modules(TagLib REQUIRED taglib)
 
 set (CMAKE_AUTORCC ON)
 
@@ -85,14 +83,10 @@ if (NOT Mp4v2_FOUND)
     )
 endif ()
 
-target_include_directories(${EXE_NAME}
-PRIVATE
-    ${TagLib_INCLUDE_DIRS}
-)
 target_link_libraries(${EXE_NAME}
 PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${TagLib_LINK_LIBRARIES}
+    TagLib::tag
 )
 
 if (Mp4v2_FOUND)

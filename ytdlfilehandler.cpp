@@ -99,7 +99,6 @@ FileHandlerInterface::Status YtdlFileHandler::writeToFile(ChapterItem *chapterRo
     QJsonDocument json(parentObj);
 
     QTextStream out(&sf);
-    out.setCodec("UTF-8");
     out << json.toJson();
 
     out.flush();

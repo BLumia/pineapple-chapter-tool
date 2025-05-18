@@ -195,7 +195,7 @@ void MainWindow::on_actionExport_triggered()
     QMap<QString, QString> filterExporterMap; // <Filter Copywriting, Suffix>
 
     QList<QPair<QString, QString> > exporters = FileHandlerManager::instance()->exporterList();
-    for (const QPair<QString, QString> & exporter : qAsConst(exporters)) {
+    for (const QPair<QString, QString> & exporter : std::as_const(exporters)) {
         filterExporterMap[exporter.second] = exporter.first;
         filters.append(exporter.second);
     }

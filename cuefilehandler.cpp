@@ -125,7 +125,6 @@ FileHandlerInterface::Status CueFileHandler::writeToFile(ChapterItem *chapterRoo
     sf.fileName();
 
     QTextStream out(&sf);
-    out.setCodec("UTF-8");
 
     // FIXME: some line have quote s
 
